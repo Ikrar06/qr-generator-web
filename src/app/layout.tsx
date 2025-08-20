@@ -5,6 +5,7 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://qr-generator-web.vercel.app'),
   title: {
     default: 'QR Generator Web',
     template: '%s | QR Generator Web'
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://qr-generator-web.vercel.app',
+    url: '/',
     title: 'QR Generator Web',
     description: 'Generate beautiful QR codes with custom colors and formats',
     siteName: 'QR Generator Web',
@@ -34,11 +35,6 @@ export const metadata: Metadata = {
     title: 'QR Generator Web',
     description: 'Generate beautiful QR codes with custom colors and formats',
     images: ['/og-image.jpg']
-  },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1
   },
   robots: {
     index: true,
