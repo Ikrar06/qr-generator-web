@@ -8,7 +8,7 @@ import { MetadataRoute } from 'next';
 import { APP_CONFIG, SEO_CONFIG } from '@/lib/constants';
 
 // Base URL from environment or fallback
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://qr-generator-pro.vercel.app';
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://qr-generator-web-iota.vercel.app/';
 
 // Static routes configuration
 interface RouteConfig {

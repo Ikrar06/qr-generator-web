@@ -312,7 +312,7 @@ export function isAllowedOrigin(request: NextRequest): boolean {
 
   // Define allowed origins for production
   const allowedOrigins = [
-    'https://qr-generator-pro.vercel.app',
+    'https://qr-generator-web-iota.vercel.app/',
     'https://www.qr-generator-pro.com',
     // Add your production domains here
   ];

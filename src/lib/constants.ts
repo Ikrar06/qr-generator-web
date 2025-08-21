@@ -17,7 +17,7 @@ export const APP_CONFIG = {
   version: '1.0.0',
   description: 'Professional QR Code Generator with Advanced Features',
   author: 'QR Generator Team',
-  url: 'https://qr-generator-pro.vercel.app',
+  url: 'https://qr-generator-web-iota.vercel.app/',
   repository: 'https://github.com/username/qr-generator-web'
 } as const;
 
@@ -369,7 +369,7 @@ export const SEO_CONFIG = {
   DESCRIPTION: 'Create high-quality QR codes with custom colors, formats, and error correction. Free online QR code generator with SVG, PNG, and JPG export options.',
   KEYWORDS: ['QR code', 'QR generator', 'QR code creator', 'custom QR code', 'vector QR code', 'free QR generator'],
   AUTHOR: 'QR Generator Pro Team',
-  CANONICAL_URL: 'https://qr-generator-pro.vercel.app',
+  CANONICAL_URL: 'https://qr-generator-web-iota.vercel.app/',
   OG_IMAGE: '/og-image.png',
   TWITTER_CARD: 'summary_large_image'
 } as const;

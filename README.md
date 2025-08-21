@@ -730,4 +730,4 @@ https://yourapp.com?data=Hello%20World&type=text&mode=basic
 
 Built with ❤️ using Next.js, TypeScript, and modern web technologies.
 
-For more information, visit our [website](https://qrgenerator.com) or check out the [live demo](https://qrgenerator-demo.vercel.app).
+For more information, visit our [website](https://qrgenerator.com) or check out the [live demo](https://qr-generator-web-iota.vercel.app/).

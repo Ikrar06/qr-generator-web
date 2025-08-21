@@ -1,6 +1,6 @@
 # Robots.txt for QR Generator Pro
 # Professional QR Code Generator - SEO Configuration
-# https://qr-generator-pro.vercel.app/robots.txt
+# https://qr-generator-web-iota.vercel.app//robots.txt
 
 # Allow all web crawlers to access all content
 User-agent: *
@@ -62,14 +62,14 @@ Allow: /robots.txt
 Allow: /sitemap.xml
 
 # Sitemap location
-Sitemap: https://qr-generator-pro.vercel.app/sitemap.xml
+Sitemap: https://qr-generator-web-iota.vercel.app//sitemap.xml
 
 # Additional sitemaps (if you have category-specific sitemaps)
-# Sitemap: https://qr-generator-pro.vercel.app/sitemap-features.xml
-# Sitemap: https://qr-generator-pro.vercel.app/sitemap-tutorials.xml
+# Sitemap: https://qr-generator-web-iota.vercel.app//sitemap-features.xml
+# Sitemap: https://qr-generator-web-iota.vercel.app//sitemap-tutorials.xml
 
 # Host directive (helps with domain consolidation)
-Host: https://qr-generator-pro.vercel.app
+Host: https://qr-generator-web-iota.vercel.app/
 
 # Crawl delay for less aggressive crawling (in seconds)
 # This helps prevent overwhelming the server
