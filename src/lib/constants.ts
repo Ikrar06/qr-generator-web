@@ -11,30 +11,30 @@ import {
 } from '@/types/qr-types';
 import { QRFormatOption, QRErrorCorrectionOption, QRModeOption } from '@/lib/types';
 
-// Application Constants
+// Application Constants with environment variable support
 export const APP_CONFIG = {
-  name: 'QR Generator Pro',
-  version: '1.0.0',
+  name: process.env.NEXT_PUBLIC_APP_NAME || 'QR Generator Web',
+  version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
   description: 'Professional QR Code Generator with Advanced Features',
   author: 'QR Generator Team',
-  url: 'https://qr-generator-web-iota.vercel.app/',
+  url: process.env.NEXT_PUBLIC_APP_URL || 'https://qr-generator-web-iota.vercel.app/',
   repository: 'https://github.com/username/qr-generator-web'
 } as const;
 
 // QR Code Limits and Constraints
 export const QR_LIMITS = {
-  MAX_DATA_LENGTH: 4296,        // Maximum data capacity for alphanumeric
-  MAX_NUMERIC_LENGTH: 7089,     // Maximum for numeric only
-  MAX_BINARY_LENGTH: 2953,      // Maximum for binary/byte mode
-  MIN_SIZE: 64,                 // Minimum QR code size in pixels
-  MAX_SIZE: 2048,               // Maximum QR code size in pixels
-  DEFAULT_SIZE: 256,            // Default QR code size
-  MIN_MARGIN: 0,                // Minimum quiet zone
-  MAX_MARGIN: 10,               // Maximum quiet zone
-  DEFAULT_MARGIN: 2,            // Default quiet zone
-  MIN_QUALITY: 0.1,             // Minimum quality for JPEG/WEBP
-  MAX_QUALITY: 1.0,             // Maximum quality
-  DEFAULT_QUALITY: 0.92         // Default quality
+  MAX_DATA_LENGTH: parseInt(process.env.NEXT_PUBLIC_MAX_INPUT_LENGTH || '4296'),
+  MAX_NUMERIC_LENGTH: 7089,
+  MAX_BINARY_LENGTH: 2953,
+  MIN_SIZE: 64,
+  MAX_SIZE: parseInt(process.env.NEXT_PUBLIC_MAX_QR_SIZE || '2048'),
+  DEFAULT_SIZE: parseInt(process.env.NEXT_PUBLIC_DEFAULT_QR_SIZE || '256'),
+  MIN_MARGIN: 0,
+  MAX_MARGIN: 10,
+  DEFAULT_MARGIN: 2,
+  MIN_QUALITY: 0.1,
+  MAX_QUALITY: 1.0,
+  DEFAULT_QUALITY: 0.92
 } as const;
 
 // Default Color Palette
@@ -109,6 +109,18 @@ export const ERROR_CORRECTION_OPTIONS: QRErrorCorrectionOption[] = [
   }
 ];
 
+// Get default error correction from environment
+const getDefaultErrorCorrection = (): ErrorCorrectionLevel => {
+  const envValue = process.env.NEXT_PUBLIC_DEFAULT_ERROR_CORRECTION;
+  switch (envValue) {
+    case 'L': return ErrorCorrectionLevel.LOW;
+    case 'M': return ErrorCorrectionLevel.MEDIUM;
+    case 'Q': return ErrorCorrectionLevel.QUARTILE;
+    case 'H': return ErrorCorrectionLevel.HIGH;
+    default: return ErrorCorrectionLevel.MEDIUM;
+  }
+};
+
 // QR Mode Configuration
 export const QR_MODE_CONFIG: QRModeConfig = {
   [QRMode.BASIC]: {
@@ -116,10 +128,10 @@ export const QR_MODE_CONFIG: QRModeConfig = {
     description: 'Simple black and white QR code',
     features: ['Fast generation', 'Smallest file size', 'Universal compatibility'],
     defaultOptions: {
-      width: 256,
-      height: 256,
+      width: QR_LIMITS.DEFAULT_SIZE,
+      height: QR_LIMITS.DEFAULT_SIZE,
       color: { dark: '#000000', light: '#ffffff' },
-      errorCorrectionLevel: ErrorCorrectionLevel.MEDIUM
+      errorCorrectionLevel: getDefaultErrorCorrection()
     }
   },
   [QRMode.COLORED]: {
@@ -127,10 +139,10 @@ export const QR_MODE_CONFIG: QRModeConfig = {
     description: 'Customizable foreground and background colors',
     features: ['Custom colors', 'Brand matching', 'Visual appeal'],
     defaultOptions: {
-      width: 256,
-      height: 256,
+      width: QR_LIMITS.DEFAULT_SIZE,
+      height: QR_LIMITS.DEFAULT_SIZE,
       color: { dark: '#1e40af', light: '#f0f9ff' },
-      errorCorrectionLevel: ErrorCorrectionLevel.MEDIUM
+      errorCorrectionLevel: getDefaultErrorCorrection()
     }
   },
   [QRMode.SVG]: {
@@ -138,10 +150,10 @@ export const QR_MODE_CONFIG: QRModeConfig = {
     description: 'Scalable vector format for perfect quality at any size',
     features: ['Infinite scalability', 'Small file size', 'Perfect for printing'],
     defaultOptions: {
-      width: 256,
-      height: 256,
+      width: QR_LIMITS.DEFAULT_SIZE,
+      height: QR_LIMITS.DEFAULT_SIZE,
       color: { dark: '#000000', light: '#ffffff' },
-      errorCorrectionLevel: ErrorCorrectionLevel.MEDIUM,
+      errorCorrectionLevel: getDefaultErrorCorrection(),
       type: 'svg' as const
     }
   },
@@ -235,24 +247,24 @@ export const FORMAT_OPTIONS: QRFormatOption[] = [
 export const DEFAULT_OPTIONS_BY_MODE: Record<QRMode, Partial<QROptions>> = {
   [QRMode.BASIC]: {
     ...defaultQROptions,
-    width: 256,
-    height: 256,
+    width: QR_LIMITS.DEFAULT_SIZE,
+    height: QR_LIMITS.DEFAULT_SIZE,
     color: { dark: '#000000', light: '#ffffff' },
-    errorCorrectionLevel: ErrorCorrectionLevel.MEDIUM
+    errorCorrectionLevel: getDefaultErrorCorrection()
   },
   [QRMode.COLORED]: {
     ...defaultQROptions,
-    width: 256,
-    height: 256,
+    width: QR_LIMITS.DEFAULT_SIZE,
+    height: QR_LIMITS.DEFAULT_SIZE,
     color: { dark: '#1e40af', light: '#f0f9ff' },
-    errorCorrectionLevel: ErrorCorrectionLevel.MEDIUM
+    errorCorrectionLevel: getDefaultErrorCorrection()
   },
   [QRMode.SVG]: {
     ...defaultQROptions,
-    width: 256,
-    height: 256,
+    width: QR_LIMITS.DEFAULT_SIZE,
+    height: QR_LIMITS.DEFAULT_SIZE,
     color: { dark: '#000000', light: '#ffffff' },
-    errorCorrectionLevel: ErrorCorrectionLevel.MEDIUM,
+    errorCorrectionLevel: getDefaultErrorCorrection(),
     type: 'image/png'
   },
   [QRMode.HIGH_QUALITY]: {
@@ -276,7 +288,7 @@ export const VALIDATION_PATTERNS = {
 // Error Messages
 export const ERROR_MESSAGES = {
   EMPTY_DATA: 'Input data cannot be empty',
-  DATA_TOO_LONG: 'Input data exceeds maximum length',
+  DATA_TOO_LONG: `Input data exceeds maximum length (${QR_LIMITS.MAX_DATA_LENGTH} characters)`,
   INVALID_URL: 'Invalid URL format',
   INVALID_EMAIL: 'Invalid email format',
   INVALID_PHONE: 'Invalid phone number format',
@@ -337,7 +349,9 @@ export const Z_INDEX = {
 
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:3000/api',
+  BASE_URL: process.env.NODE_ENV === 'production' 
+    ? (process.env.NEXT_PUBLIC_APP_URL || '') + '/api'
+    : 'http://localhost:3000/api',
   TIMEOUT: 30000, // 30 seconds
   RETRY_ATTEMPTS: 3,
   RETRY_DELAY: 1000 // 1 second
@@ -345,7 +359,9 @@ export const API_CONFIG = {
 
 // Feature Flags
 export const FEATURE_FLAGS = {
-  ENABLE_ANALYTICS: process.env.NODE_ENV === 'production',
+  ENABLE_ANALYTICS: process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_GA_ID,
+  ENABLE_DEBUG: process.env.NEXT_PUBLIC_DEBUG_MODE === 'true',
+  ENABLE_PERFORMANCE_METRICS: process.env.NEXT_PUBLIC_SHOW_PERFORMANCE_METRICS === 'true',
   ENABLE_PWA: true,
   ENABLE_OFFLINE_MODE: true,
   ENABLE_BATCH_GENERATION: false, // Future feature
@@ -360,16 +376,18 @@ export const PERFORMANCE_CONFIG = {
   LAZY_LOAD_THRESHOLD: '10px',   // Intersection observer threshold
   MAX_HISTORY_ITEMS: 50,         // Maximum items in generation history
   CACHE_DURATION: 5 * 60 * 1000, // 5 minutes cache duration
-  MAX_FILE_SIZE: 10 * 1024 * 1024 // 10MB max file size
+  MAX_FILE_SIZE: parseInt(process.env.NEXT_PUBLIC_MAX_FILE_SIZE || '10485760'), // 10MB default
+  RATE_LIMIT_WINDOW: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'), // 15 minutes
+  RATE_LIMIT_MAX: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100')
 } as const;
 
 // SEO and Meta Configuration
 export const SEO_CONFIG = {
-  TITLE: 'QR Generator Pro - Professional QR Code Generator',
+  TITLE: `${APP_CONFIG.name} - Professional QR Code Generator`,
   DESCRIPTION: 'Create high-quality QR codes with custom colors, formats, and error correction. Free online QR code generator with SVG, PNG, and JPG export options.',
   KEYWORDS: ['QR code', 'QR generator', 'QR code creator', 'custom QR code', 'vector QR code', 'free QR generator'],
   AUTHOR: 'QR Generator Pro Team',
-  CANONICAL_URL: 'https://qr-generator-web-iota.vercel.app/',
+  CANONICAL_URL: APP_CONFIG.url,
   OG_IMAGE: '/og-image.png',
   TWITTER_CARD: 'summary_large_image'
 } as const;
