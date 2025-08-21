@@ -30,7 +30,7 @@ const footerSections: FooterSection[] = [
       { name: 'Help Center', href: '/help' },
       { name: 'User Guide', href: '/guide' },
       { name: 'Contact Us', href: '/contact' },
-      { name: 'Report Issue', href: 'https://github.com/qr-generator-web/issues', external: true },
+      { name: 'Report Issue', href: 'https://github.com/Ikrar06/qr-generator-web/issues', external: true },
     ],
   },
   {
@@ -56,7 +56,7 @@ const footerSections: FooterSection[] = [
 const socialLinks = [
   {
     name: 'GitHub',
-    href: 'https://github.com/qr-generator-web',
+    href: 'https://github.com/Ikrar06/qr-generator-web',
     icon: (
       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path

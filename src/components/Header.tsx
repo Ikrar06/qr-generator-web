@@ -163,7 +163,7 @@ export default function Header({ className = '' }: HeaderProps) {
             
             {/* GitHub Link */}
             <a
-              href="https://github.com/qr-generator-web"
+              href="https://github.com/Ikrar06/qr-generator-web"
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 text-gray-600 hover:text-gray-900 transition-colors duration-200"
@@ -274,7 +274,7 @@ export default function Header({ className = '' }: HeaderProps) {
             </Button>
             
             <a
-              href="https://github.com/qr-generator-web"
+              href="https://github.com/Ikrar06/qr-generator-web"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center px-3 py-2 text-gray-600 

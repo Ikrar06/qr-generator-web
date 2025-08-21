@@ -174,8 +174,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
               url: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
               logo: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/images/logo.png`,
               sameAs: [
-                'https://github.com/qr-generator-web',
-                'https://twitter.com/qrgenerator',
+                'https://github.com/Ikrar06/qr-generator-web',
               ],
             }),
           }}

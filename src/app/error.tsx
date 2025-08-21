@@ -404,7 +404,7 @@ User Agent: ${navigator.userAgent}`;
                   </a>
                   <span className="hidden sm:inline text-blue-600">•</span>
                   <a
-                    href="https://github.com/qr-generator-web/issues"
+                    href="https://github.com/Ikrar06/qr-generator-web/issues"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-blue-700 hover:text-blue-800 underline"

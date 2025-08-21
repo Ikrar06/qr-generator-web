@@ -48,7 +48,7 @@ A modern, professional QR code generator built with Next.js 14, TypeScript, and 
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/qr-generator-web.git
+git clone https://github.com/Ikrar06/qr-generator-web.git
 cd qr-generator-web
 ```
 
@@ -358,8 +358,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Getting Help
 - 📚 [Documentation](docs/)
-- 💬 [Discussions](https://github.com/yourusername/qr-generator-web/discussions)
-- 🐛 [Issue Tracker](https://github.com/yourusername/qr-generator-web/issues)
+- 💬 [Discussions](https://github.com/Ikrar06/qr-generator-web/discussions)
+- 🐛 [Issue Tracker](https://github.com/Ikrar06/qr-generator-web/issues)
 - ✉️ [Email Support](mailto:support@qrgenerator.com)
 
 ### Reporting Issues
