@@ -1,8 +1,8 @@
-// src/app/layout.tsx
 import type { Metadata, Viewport } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({
   subsets: ['latin'],
@@ -139,29 +139,6 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
         <meta httpEquiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
         
-        {/* Analytics - Google Analytics 4 */}
-        {process.env.NEXT_PUBLIC_GA_ID && (
-          <>
-            <script
-              async
-              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
-            />
-            <script
-              dangerouslySetInnerHTML={{
-                __html: `
-                  window.dataLayer = window.dataLayer || [];
-                  function gtag(){dataLayer.push(arguments);}
-                  gtag('js', new Date());
-                  gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', {
-                    page_title: document.title,
-                    page_location: window.location.href,
-                  });
-                `,
-              }}
-            />
-          </>
-        )}
-        
         {/* Structured Data - Organization */}
         <script
           type="application/ld+json"
@@ -254,6 +231,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
             <p className="text-gray-600 font-medium">Processing...</p>
           </div>
         </div>
+
+        {/* Vercel Analytics - Only loads in production */}
+        <Analytics />
 
         {/* Service Worker Registration */}
         {process.env.NODE_ENV === 'production' && (
@@ -375,11 +355,16 @@ export default function RootLayout({ children }: RootLayoutProps) {
                   }
                 },
                 
-                // Analytics tracking with error handling
+                // Analytics tracking with Vercel Analytics integration
                 analytics: {
                   track: function(event, properties) {
                     try {
-                      // Google Analytics 4 tracking
+                      // Vercel Analytics tracking
+                      if (typeof window !== 'undefined' && window.va) {
+                        window.va('track', event, properties);
+                      }
+                      
+                      // Google Analytics 4 tracking (if configured)
                       if (typeof gtag !== 'undefined') {
                         gtag('event', event, properties);
                       }
