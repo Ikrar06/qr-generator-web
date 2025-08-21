@@ -3,7 +3,6 @@
  * Performance optimization utilities for QR Generator Web App
  * Provides comprehensive performance monitoring, optimization, and caching functionality
  */
-
 import { PERFORMANCE_CONFIG, API_CONFIG } from './constants';
 
 // Performance metrics interface
@@ -12,11 +11,11 @@ interface PerformanceMetrics {
   duration: number;
   timestamp: number;
   type: 'navigation' | 'resource' | 'measure' | 'paint' | 'custom';
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // Cache interface
-interface CacheItem<T = any> {
+interface CacheItem<T = unknown> {
   data: T;
   timestamp: number;
   expiry: number;
@@ -40,7 +39,7 @@ export class PerformanceMonitor {
   /**
    * Mark the start of a performance measurement
    */
-  markStart(name: string, metadata?: Record<string, any>): void {
+  markStart(name: string, metadata?: Record<string, unknown>): void {
     try {
       if (typeof window !== 'undefined' && window.performance?.mark) {
         window.performance.mark(`${name}-start`);
@@ -58,7 +57,7 @@ export class PerformanceMonitor {
   /**
    * Mark the end of a performance measurement and calculate duration
    */
-  markEnd(name: string, metadata?: Record<string, any>): number | null {
+  markEnd(name: string, metadata?: Record<string, unknown>): number | null {
     try {
       if (typeof window !== 'undefined' && window.performance?.mark && window.performance?.measure) {
         const endMarkName = `${name}-end`;
@@ -101,7 +100,7 @@ export class PerformanceMonitor {
   /**
    * Record a custom performance metric
    */
-  recordCustomMetric(name: string, value: number, metadata?: Record<string, any>): void {
+  recordCustomMetric(name: string, value: number, metadata?: Record<string, unknown>): void {
     const metric: PerformanceMetrics = {
       name,
       duration: value,
@@ -178,12 +177,18 @@ export class PerformanceMonitor {
    * Generate performance report
    */
   generateReport(): {
-    summary: Record<string, any>;
+    summary: {
+      totalMetrics: number;
+      averageQRGeneration: number;
+      averageDownload: number;
+      slowOperations: number;
+      cacheHitRate: number;
+    };
     metrics: PerformanceMetrics[];
     recommendations: string[];
   } {
     const recommendations: string[] = [];
-    const summary: Record<string, any> = {
+    const summary = {
       totalMetrics: this.metrics.length,
       averageQRGeneration: 0,
       averageDownload: 0,
@@ -231,16 +236,22 @@ export class PerformanceMonitor {
     }
   }
 
-  private storeMetadata(key: string, metadata: Record<string, any>): void {
+  private storeMetadata(key: string, metadata: Record<string, unknown>): void {
     if (typeof window !== 'undefined') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).__perfMetadata = (window as any).__perfMetadata || {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).__perfMetadata[key] = metadata;
     }
   }
 
-  private getStoredMetadata(key: string): Record<string, any> {
-    if (typeof window !== 'undefined' && (window as any).__perfMetadata) {
-      return (window as any).__perfMetadata[key] || {};
+  private getStoredMetadata(key: string): Record<string, unknown> {
+    if (typeof window !== 'undefined') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const windowWithMetadata = window as any;
+      if (windowWithMetadata.__perfMetadata) {
+        return windowWithMetadata.__perfMetadata[key] || {};
+      }
     }
     return {};
   }
@@ -510,10 +521,11 @@ export const BundleOptimization = {
   /**
    * Dynamic import with error handling
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async dynamicImport<T = any>(importFn: () => Promise<T>): Promise<T | null> {
     try {
-      const module = await importFn();
-      return module;
+      const importedModule = await importFn();
+      return importedModule;
     } catch (error) {
       console.error('Dynamic import failed:', error);
       return null;
