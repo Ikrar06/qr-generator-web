@@ -1,0 +1,187 @@
+# Robots.txt for QR Generator Pro
+# Professional QR Code Generator - SEO Configuration
+# https://qr-generator-pro.vercel.app/robots.txt
+
+# Allow all web crawlers to access all content
+User-agent: *
+Allow: /
+
+# Specific rules for major search engines
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Slurp
+Allow: /
+Crawl-delay: 1
+
+# Block access to generated QR codes directory for privacy
+# Users' generated QR codes should not be indexed
+Disallow: /generated-qr/
+Disallow: /downloads/
+
+# Block access to API endpoints (not meant for search indexing)
+Disallow: /api/
+
+# Block access to development and configuration files
+Disallow: /_next/
+Disallow: /static/
+Disallow: /.well-known/
+Disallow: /admin/
+
+# Block access to temporary or cache directories
+Disallow: /temp/
+Disallow: /cache/
+Disallow: /tmp/
+
+# Block access to user data and logs
+Disallow: /logs/
+Disallow: /analytics/
+Disallow: /user-data/
+
+# Block access to error pages (they don't provide value for SEO)
+Disallow: /404
+Disallow: /500
+Disallow: /error
+
+# Block access to test and development routes
+Disallow: /test/
+Disallow: /dev/
+Disallow: /debug/
+
+# Allow specific important files
+Allow: /favicon.ico
+Allow: /manifest.json
+Allow: /site.webmanifest
+Allow: /apple-touch-icon.png
+Allow: /robots.txt
+Allow: /sitemap.xml
+
+# Sitemap location
+Sitemap: https://qr-generator-pro.vercel.app/sitemap.xml
+
+# Additional sitemaps (if you have category-specific sitemaps)
+# Sitemap: https://qr-generator-pro.vercel.app/sitemap-features.xml
+# Sitemap: https://qr-generator-pro.vercel.app/sitemap-tutorials.xml
+
+# Host directive (helps with domain consolidation)
+Host: https://qr-generator-pro.vercel.app
+
+# Crawl delay for less aggressive crawling (in seconds)
+# This helps prevent overwhelming the server
+# Remove or adjust if you want faster crawling
+Crawl-delay: 1
+
+# Special rules for AI/ML crawlers and content scrapers
+# Adjust these based on your preferences for AI training data
+
+# OpenAI GPT crawler
+User-agent: GPTBot
+Allow: /
+# Disallow: / # Uncomment to block OpenAI crawlers
+
+# Google Bard/Gemini crawler  
+User-agent: Google-Extended
+Allow: /
+# Disallow: / # Uncomment to block Google AI crawlers
+
+# Common AI/ML crawlers
+User-agent: CCBot
+Allow: /
+# Disallow: / # Uncomment to block Common Crawl
+
+User-agent: anthropic-ai
+Allow: /
+# Disallow: / # Uncomment to block Anthropic crawlers
+
+User-agent: Claude-Web
+Allow: /
+# Disallow: / # Uncomment to block Claude crawlers
+
+# Facebook/Meta crawler
+User-agent: facebookexternalhit
+Allow: /
+
+# Twitter crawler
+User-agent: Twitterbot
+Allow: /
+
+# LinkedIn crawler
+User-agent: LinkedInBot
+Allow: /
+
+# WhatsApp crawler (for link previews)
+User-agent: WhatsApp
+Allow: /
+
+# Telegram crawler (for link previews)
+User-agent: TelegramBot
+Allow: /
+
+# Discord crawler (for link previews)
+User-agent: Discordbot
+Allow: /
+
+# Slack crawler (for link previews)
+User-agent: Slackbot
+Allow: /
+
+# Block malicious or unwanted crawlers
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: Baiduspider
+# Allow: / # Uncomment if you want Baidu indexing
+Disallow: /
+
+User-agent: YandexBot
+# Allow: / # Uncomment if you want Yandex indexing  
+Disallow: /
+
+# Block aggressive scrapers and spam bots
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: Ahrefs
+Disallow: /
+
+User-agent: MegaIndex
+Disallow: /
+
+User-agent: BLEXBot
+Disallow: /
+
+# Archive crawlers (adjust based on preference)
+User-agent: ia_archiver
+Allow: /
+
+User-agent: archive.org_bot
+Allow: /
+
+# Academic and research crawlers
+User-agent: ResearchScan
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+# Performance considerations:
+# - This robots.txt is optimized for a QR generator application
+# - It protects user-generated content while allowing indexing of public pages
+# - It balances SEO benefits with privacy and server load
+# - Social media crawlers are allowed for better link previews
+# - Aggressive commercial crawlers are blocked to reduce server load
+
+# Note: robots.txt is a public file and provides suggestions, not enforcement
+# Always implement server-side access controls for sensitive areas
+# Monitor your server logs to identify unwanted crawler traffic

@@ -69,7 +69,17 @@
 
 /* Components Layer - Reusable component styles */
 @layer components {
-  /* Button Components */
+  /* Container Utilities - REQUIRED for page.tsx */
+  .container-tight {
+    @apply max-w-6xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Text Gradient - REQUIRED for page.tsx */
+  .text-gradient {
+    @apply bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent;
+  }
+
+  /* Button Components - REQUIRED variants for page.tsx */
   .btn-primary {
     @apply bg-blue-600 hover:bg-blue-700 focus:bg-blue-700 
            text-white font-medium py-2.5 px-5 rounded-lg 
@@ -112,24 +122,24 @@
   }
 
   .btn-lg {
-    @apply py-3 px-6 text-lg;
+    @apply py-3 px-6 text-base;
   }
 
-  /* Card Components */
+  /* Card Components - REQUIRED for page.tsx */
   .card {
     @apply bg-white rounded-xl shadow-sm p-6 border border-gray-100
            transition-all duration-200 ease-in-out;
   }
 
   .card:hover {
-    @apply shadow-lg border-gray-200 -translate-y-1;
+    @apply shadow-lg border-gray-200;
   }
 
   .card-interactive {
-    @apply cursor-pointer;
+    @apply cursor-pointer hover:-translate-y-1;
   }
 
-  /* Input Components */
+  /* Input Components - REQUIRED for page.tsx */
   .input-primary {
     @apply w-full px-4 py-2.5 text-gray-900 bg-white border border-gray-300 
            rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500
@@ -145,7 +155,7 @@
     @apply input-primary resize-none min-h-[100px];
   }
 
-  /* Form Components */
+  /* Form Components - REQUIRED for page.tsx */
   .form-group {
     @apply space-y-2;
   }
@@ -183,19 +193,18 @@
     @apply bg-red-100 text-red-800;
   }
 
-  /* Modal/Dialog Components */
+  /* Modal/Dialog Components - REQUIRED for page.tsx */
   .modal-backdrop {
     @apply fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-40
            transition-opacity duration-300 ease-in-out;
   }
 
   .modal-content {
-    @apply fixed inset-x-4 top-1/2 -translate-y-1/2 bg-white rounded-xl 
-           shadow-2xl border border-gray-200 z-50 max-w-md mx-auto
+    @apply bg-white rounded-xl shadow-2xl border border-gray-200 z-50
            transition-all duration-300 ease-in-out;
   }
 
-  /* Loading Components */
+  /* Loading Components - REQUIRED for page.tsx */
   .spinner {
     @apply animate-spin rounded-full border-2 border-gray-300 border-t-blue-600;
   }
@@ -212,7 +221,7 @@
     @apply w-8 h-8;
   }
 
-  /* Toast/Notification Components */
+  /* Toast/Notification Components - REQUIRED for page.tsx */
   .toast {
     @apply bg-white border border-gray-200 rounded-lg shadow-lg p-4 
            max-w-sm w-full pointer-events-auto
@@ -220,29 +229,83 @@
   }
 
   .toast-success {
-    @apply border-green-200 bg-green-50;
+    @apply border-green-200 bg-green-50 text-green-800;
   }
 
   .toast-error {
-    @apply border-red-200 bg-red-50;
+    @apply border-red-200 bg-red-50 text-red-800;
   }
 
   .toast-warning {
-    @apply border-yellow-200 bg-yellow-50;
+    @apply border-yellow-200 bg-yellow-50 text-yellow-800;
   }
 
   .toast-info {
-    @apply border-blue-200 bg-blue-50;
+    @apply border-blue-200 bg-blue-50 text-blue-800;
+  }
+
+  /* Details/Summary styling for FAQ - REQUIRED for page.tsx */
+  details {
+    @apply transition-all duration-200;
+  }
+
+  details summary {
+    @apply list-none cursor-pointer select-none;
+  }
+
+  details summary::-webkit-details-marker {
+    display: none;
+  }
+
+  details[open] {
+    @apply border-blue-200;
+  }
+
+  details[open] summary {
+    @apply text-blue-600 mb-4;
+  }
+
+  /* Group hover effects - REQUIRED for page.tsx */
+  .group:hover .group-hover\:scale-110 {
+    transform: scale(1.1);
+  }
+
+  .group-open .group-open\:rotate-180 {
+    transform: rotate(180deg);
+  }
+
+  .group-open .group-open\:text-blue-600 {
+    @apply text-blue-600;
+  }
+
+  /* QR Generator specific styles */
+  .qr-preview-container {
+    @apply relative bg-white border border-gray-200 rounded-lg p-4 
+           flex items-center justify-center min-h-[200px];
+  }
+
+  .qr-preview-loading {
+    @apply absolute inset-0 flex items-center justify-center 
+           bg-white/80 backdrop-blur-sm;
+  }
+
+  .color-picker-grid {
+    @apply grid grid-cols-6 gap-2 p-3;
+  }
+
+  .color-picker-item {
+    @apply w-8 h-8 rounded-md border-2 border-gray-200 cursor-pointer 
+           transition-all duration-200 hover:scale-110 hover:shadow-md;
+  }
+
+  .color-picker-item.selected {
+    @apply ring-2 ring-blue-500 ring-offset-2;
   }
 }
 
 /* Utilities Layer - Custom utility classes */
 @layer utilities {
   /* Text Gradients */
-  .text-gradient {
-    @apply bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent;
-  }
-
   .text-gradient-success {
     @apply bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent;
   }
@@ -292,10 +355,6 @@
   }
 
   /* Container Utilities */
-  .container-tight {
-    @apply max-w-4xl mx-auto px-4;
-  }
-
   .container-wide {
     @apply max-w-7xl mx-auto px-4;
   }
@@ -316,6 +375,30 @@
 
   .glass-dark {
     @apply bg-black/20 backdrop-blur-md border border-white/10;
+  }
+
+  /* Screen Reader Only - REQUIRED for accessibility */
+  .sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+  }
+
+  .focus\:not-sr-only:focus {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    padding: inherit !important;
+    margin: inherit !important;
+    overflow: visible !important;
+    clip: auto !important;
+    white-space: normal !important;
   }
 }
 
@@ -362,6 +445,37 @@
   }
 }
 
+/* Slide animations for toast - REQUIRED for page.tsx */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.animate-in {
+  animation: slideInRight 0.3s ease-out;
+}
+
+.animate-out {
+  animation: slideOutRight 0.3s ease-in;
+}
+
 /* Print Styles */
 @media print {
   .no-print {
@@ -370,6 +484,10 @@
   
   .print-only {
     display: block !important;
+  }
+  
+  .card {
+    @apply shadow-none border border-gray-300;
   }
 }
 

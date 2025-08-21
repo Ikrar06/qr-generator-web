@@ -1,3 +1,4 @@
+// src/lib/types.ts
 import { ReactNode, HTMLAttributes, ButtonHTMLAttributes, InputHTMLAttributes } from 'react';
 import { QRMode, OutputFormat, ErrorCorrectionLevel } from '@/types/qr-types';
 

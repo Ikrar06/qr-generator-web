@@ -276,11 +276,46 @@ export type FormatMimeTypes = {
 };
 
 export type QRGenerationHookReturn = {
+  // State
   state: QRGenerationState;
+  progress: ProgressState; // Add progress property
+  
+  // Core functionality
   generate: (request: QRGenerationRequest) => Promise<QRGenerationResponse>;
+  generatePreview: (request: QRGenerationRequest) => void;
+  generateDebounced: ((request: QRGenerationRequest) => void) & { cancel: () => void };
+  generateBatch: (requests: QRGenerationRequest[]) => Promise<QRGenerationResponse[]>;
   download: (response: QRGenerationResponse, options?: Partial<DownloadOptions>) => Promise<void>;
   clear: () => void;
   retry: () => Promise<QRGenerationResponse | null>;
+  cancel: () => void;
+
+  // History management
+  getFromHistory: (timestamp: number) => QRGenerationResponse | null;
+  removeFromHistory: (timestamp: number) => void;
+  clearHistory: () => void;
+
+  // Utilities
+  updateSettings: (options: Partial<any>) => void;
+  getSupportedFormats: (mode: QRMode) => OutputFormat[];
+  validateRequest: (request: QRGenerationRequest) => { isValid: boolean; errors: string[] };
+  getStats: () => {
+    total: number;
+    successful: number;
+    failed: number;
+    successRate: number;
+    formatBreakdown: Record<OutputFormat, number>;
+    modeBreakdown: Record<string, number>;
+    averageGenerationTime: number;
+    lastGenerated: number | null;
+  };
+
+  // Status checks
+  isGenerating: boolean;
+  isDownloading: boolean;
+  hasError: boolean;
+  hasCurrentQR: boolean;
+  historyCount: number;
 };
 
 // Additional utility types from component-types.ts

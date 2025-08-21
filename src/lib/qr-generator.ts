@@ -94,6 +94,29 @@ export class QRGenerator {
   }
 
   /**
+   * Generate QR code data URL with proper error handling
+   */
+  private async generateQRDataURL(
+    data: string, 
+    options: any
+  ): Promise<string> {
+    return new Promise((resolve, reject) => {
+      try {
+        // Use the callback version to ensure we get the result properly
+        QRCode.toDataURL(data, options, (error: any, url: string) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(url);
+          }
+        });
+      } catch (syncError) {
+        reject(syncError);
+      }
+    });
+  }
+
+  /**
    * Generate basic black and white QR code
    */
   private async generateBasic(
@@ -101,50 +124,90 @@ export class QRGenerator {
     options: QROptions, 
     filename: string
   ): Promise<QRGenerationResponse> {
-    const qrOptions = {
-      errorCorrectionLevel: options.errorCorrectionLevel,
-      type: options.type,
-      quality: options.quality,
-      margin: options.margin,
-      color: {
-        dark: '#000000',
-        light: '#ffffff'
-      },
-      width: options.width,
-      rendererOpts: options.rendererOpts
-    };
-
-    let result: string | Buffer;
-    let dataUrl: string;
-    let format: OutputFormat;
-
     if (options.type === 'svg') {
-      // Generate SVG
-      result = await QRCode.toString(data, {
-        ...qrOptions,
+      // Generate SVG using toString method
+      const svgOptions = {
+        errorCorrectionLevel: options.errorCorrectionLevel,
+        margin: options.margin,
+        color: {
+          dark: '#000000',
+          light: '#ffffff'
+        },
+        width: options.width
+      };
+
+      const svgString = await QRCode.toString(data, {
+        ...svgOptions,
         type: 'svg' as any
       });
-      dataUrl = `data:image/svg+xml;base64,${Buffer.from(result as string).toString('base64')}`;
-      format = OutputFormat.SVG;
-    } else {
-      // Generate raster image
-      result = await QRCode.toDataURL(data, qrOptions);
-      dataUrl = result as string;
-      format = this.getFormatFromMimeType(options.type);
-    }
 
-    return {
-      success: true,
-      data: result,
-      dataUrl,
-      filename,
-      format,
-      size: {
+      const dataUrl = `data:image/svg+xml;base64,${Buffer.from(svgString).toString('base64')}`;
+
+      return {
+        success: true,
+        data: svgString,
+        dataUrl,
+        filename,
+        format: OutputFormat.SVG,
+        size: {
+          width: options.width,
+          height: options.height
+        },
+        timestamp: Date.now()
+      };
+    } else {
+      // Generate raster image using callback-based toDataURL
+      const baseOptions = {
+        errorCorrectionLevel: options.errorCorrectionLevel,
+        margin: options.margin,
+        color: {
+          dark: '#000000',
+          light: '#ffffff'
+        },
         width: options.width,
-        height: options.height
-      },
-      timestamp: Date.now()
-    };
+        rendererOpts: options.rendererOpts
+      };
+
+      let qrDataUrl: string;
+      let format: OutputFormat;
+
+      // Use the safe callback-based method
+      if (options.type === 'image/jpeg') {
+        qrDataUrl = await this.generateQRDataURL(data, {
+          ...baseOptions,
+          type: 'image/jpeg',
+          quality: options.quality
+        });
+        format = OutputFormat.JPG;
+      } else if (options.type === 'image/webp') {
+        qrDataUrl = await this.generateQRDataURL(data, {
+          ...baseOptions,
+          type: 'image/webp',
+          quality: options.quality
+        });
+        format = OutputFormat.WEBP;
+      } else {
+        // Default to PNG
+        qrDataUrl = await this.generateQRDataURL(data, {
+          ...baseOptions,
+          type: 'image/png'
+        });
+        format = OutputFormat.PNG;
+      }
+
+      return {
+        success: true,
+        data: qrDataUrl,
+        dataUrl: qrDataUrl,
+        filename,
+        format,
+        size: {
+          width: options.width,
+          height: options.height
+        },
+        timestamp: Date.now()
+      };
+    }
   }
 
   /**
@@ -155,47 +218,84 @@ export class QRGenerator {
     options: QROptions, 
     filename: string
   ): Promise<QRGenerationResponse> {
-    const qrOptions = {
-      errorCorrectionLevel: options.errorCorrectionLevel,
-      type: options.type,
-      quality: options.quality,
-      margin: options.margin,
-      color: options.color,
-      width: options.width,
-      rendererOpts: options.rendererOpts
-    };
-
-    let result: string | Buffer;
-    let dataUrl: string;
-    let format: OutputFormat;
-
     if (options.type === 'svg') {
       // Generate colored SVG
-      result = await QRCode.toString(data, {
-        ...qrOptions,
+      const svgOptions = {
+        errorCorrectionLevel: options.errorCorrectionLevel,
+        margin: options.margin,
+        color: options.color,
+        width: options.width
+      };
+
+      const svgString = await QRCode.toString(data, {
+        ...svgOptions,
         type: 'svg' as any
       });
-      dataUrl = `data:image/svg+xml;base64,${Buffer.from(result as string).toString('base64')}`;
-      format = OutputFormat.SVG;
-    } else {
-      // Generate colored raster image
-      result = await QRCode.toDataURL(data, qrOptions);
-      dataUrl = result as string;
-      format = this.getFormatFromMimeType(options.type);
-    }
 
-    return {
-      success: true,
-      data: result,
-      dataUrl,
-      filename,
-      format,
-      size: {
+      const dataUrl = `data:image/svg+xml;base64,${Buffer.from(svgString).toString('base64')}`;
+
+      return {
+        success: true,
+        data: svgString,
+        dataUrl,
+        filename,
+        format: OutputFormat.SVG,
+        size: {
+          width: options.width,
+          height: options.height
+        },
+        timestamp: Date.now()
+      };
+    } else {
+      // Generate colored raster image using callback-based method
+      const baseOptions = {
+        errorCorrectionLevel: options.errorCorrectionLevel,
+        margin: options.margin,
+        color: options.color,
         width: options.width,
-        height: options.height
-      },
-      timestamp: Date.now()
-    };
+        rendererOpts: options.rendererOpts
+      };
+
+      let qrDataUrl: string;
+      let format: OutputFormat;
+
+      // Use the safe callback-based method
+      if (options.type === 'image/jpeg') {
+        qrDataUrl = await this.generateQRDataURL(data, {
+          ...baseOptions,
+          type: 'image/jpeg',
+          quality: options.quality
+        });
+        format = OutputFormat.JPG;
+      } else if (options.type === 'image/webp') {
+        qrDataUrl = await this.generateQRDataURL(data, {
+          ...baseOptions,
+          type: 'image/webp',
+          quality: options.quality
+        });
+        format = OutputFormat.WEBP;
+      } else {
+        // Default to PNG
+        qrDataUrl = await this.generateQRDataURL(data, {
+          ...baseOptions,
+          type: 'image/png'
+        });
+        format = OutputFormat.PNG;
+      }
+
+      return {
+        success: true,
+        data: qrDataUrl,
+        dataUrl: qrDataUrl,
+        filename,
+        format,
+        size: {
+          width: options.width,
+          height: options.height
+        },
+        timestamp: Date.now()
+      };
+    }
   }
 
   /**
@@ -243,50 +343,89 @@ export class QRGenerator {
     options: QROptions, 
     filename: string
   ): Promise<QRGenerationResponse> {
-    const qrOptions = {
-      errorCorrectionLevel: ErrorCorrectionLevel.HIGH, // Force high error correction
-      type: options.type,
-      quality: Math.max(options.quality, 0.95), // Ensure high quality
-      margin: Math.max(options.margin, 4), // Larger margin for better scanning
-      color: options.color,
-      width: Math.max(options.width, 512), // Minimum size for HQ
-      rendererOpts: {
-        crisp: true,
-        ...options.rendererOpts
-      }
-    };
-
-    let result: string | Buffer;
-    let dataUrl: string;
-    let format: OutputFormat;
-
+    const highQualityWidth = Math.max(options.width, 512);
+    
     if (options.type === 'svg') {
       // Generate high quality SVG
-      result = await QRCode.toString(data, {
-        ...qrOptions,
+      const svgOptions = {
+        errorCorrectionLevel: ErrorCorrectionLevel.HIGH,
+        margin: Math.max(options.margin, 4),
+        color: options.color,
+        width: highQualityWidth
+      };
+
+      const svgString = await QRCode.toString(data, {
+        ...svgOptions,
         type: 'svg' as any
       });
-      dataUrl = `data:image/svg+xml;base64,${Buffer.from(result as string).toString('base64')}`;
-      format = OutputFormat.SVG;
-    } else {
-      // Generate high quality raster image
-      result = await QRCode.toDataURL(data, qrOptions);
-      dataUrl = result as string;
-      format = this.getFormatFromMimeType(options.type);
-    }
 
-    return {
-      success: true,
-      data: result,
-      dataUrl,
-      filename,
-      format,
-      size: {
-        width: qrOptions.width,
-        height: qrOptions.width // QR codes are square
-      },
-      timestamp: Date.now()
-    };
+      const dataUrl = `data:image/svg+xml;base64,${Buffer.from(svgString).toString('base64')}`;
+
+      return {
+        success: true,
+        data: svgString,
+        dataUrl,
+        filename,
+        format: OutputFormat.SVG,
+        size: {
+          width: highQualityWidth,
+          height: highQualityWidth
+        },
+        timestamp: Date.now()
+      };
+    } else {
+      // Generate high quality raster image using callback-based method
+      const baseOptions = {
+        errorCorrectionLevel: ErrorCorrectionLevel.HIGH,
+        margin: Math.max(options.margin, 4),
+        color: options.color,
+        width: highQualityWidth,
+        rendererOpts: {
+          crisp: true,
+          ...options.rendererOpts
+        }
+      };
+
+      let qrDataUrl: string;
+      let format: OutputFormat;
+
+      // Use the safe callback-based method
+      if (options.type === 'image/jpeg') {
+        qrDataUrl = await this.generateQRDataURL(data, {
+          ...baseOptions,
+          type: 'image/jpeg',
+          quality: Math.max(options.quality, 0.95)
+        });
+        format = OutputFormat.JPG;
+      } else if (options.type === 'image/webp') {
+        qrDataUrl = await this.generateQRDataURL(data, {
+          ...baseOptions,
+          type: 'image/webp',
+          quality: Math.max(options.quality, 0.95)
+        });
+        format = OutputFormat.WEBP;
+      } else {
+        // Default to PNG
+        qrDataUrl = await this.generateQRDataURL(data, {
+          ...baseOptions,
+          type: 'image/png'
+        });
+        format = OutputFormat.PNG;
+      }
+
+      return {
+        success: true,
+        data: qrDataUrl,
+        dataUrl: qrDataUrl,
+        filename,
+        format,
+        size: {
+          width: highQualityWidth,
+          height: highQualityWidth
+        },
+        timestamp: Date.now()
+      };
+    }
   }
 
   /**
@@ -392,6 +531,7 @@ export class QRGenerator {
       case 'image/webp':
         return OutputFormat.WEBP;
       case 'image/svg+xml':
+      case 'svg':
         return OutputFormat.SVG;
       default:
         return OutputFormat.PNG;

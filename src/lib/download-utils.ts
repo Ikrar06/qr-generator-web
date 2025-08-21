@@ -9,21 +9,115 @@ import { FORMAT_MIME_TYPES } from '@/lib/constants';
 import { 
   dataURLtoBlob, 
   sanitizeFilename, 
-  formatFileSize, 
-  generateUniqueFilename 
+  formatFileSize
 } from '@/lib/utils';
 
 /**
  * File download utilities for QR code generation
  */
 
+/**
+ * Generate unique filename with timestamp - local implementation
+ */
+function generateUniqueFilename(prefix: string = 'qr-code', extension: string = 'png'): string {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const randomSuffix = Math.random().toString(36).substring(2, 8);
+  return `${prefix}-${timestamp}-${randomSuffix}.${extension}`;
+}
+
 export interface DownloadProgressCallback {
   (progress: number, stage: string): void;
 }
 
-export interface DownloadError extends Error {
+export class DownloadError extends Error {
   code: string;
   details?: any;
+  
+  constructor(message: string, code: string = 'DOWNLOAD_FAILED', details?: any) {
+    super(message);
+    this.name = 'DownloadError';
+    this.code = code;
+    this.details = details;
+  }
+}
+
+/**
+ * Convert response data to Blob
+ */
+function responseDataToBlob(data: string | Buffer | ArrayBuffer | Blob | any, format: OutputFormat): Blob {
+  if (data instanceof Blob) {
+    return data;
+  }
+  
+  if (typeof data === 'string') {
+    if (data.startsWith('data:')) {
+      // Data URL
+      return dataURLtoBlob(data);
+    } else if (format === OutputFormat.SVG) {
+      // SVG string
+      return new Blob([data], { type: FORMAT_MIME_TYPES[OutputFormat.SVG] });
+    } else {
+      // Base64 string
+      try {
+        const binaryString = atob(data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        return new Blob([bytes], { type: FORMAT_MIME_TYPES[format] });
+      } catch (error) {
+        // If atob fails, treat as regular string
+        return new Blob([data], { type: FORMAT_MIME_TYPES[format] });
+      }
+    }
+  }
+  
+  // Handle Buffer (Node.js) or ArrayBuffer
+  let blobPart: BlobPart;
+  
+  if (data instanceof ArrayBuffer) {
+    blobPart = data;
+  } else if (typeof Buffer !== 'undefined' && Buffer.isBuffer(data)) {
+    // Handle Buffer - convert to standard ArrayBuffer
+    const arrayBuffer = new ArrayBuffer(data.length);
+    const view = new Uint8Array(arrayBuffer);
+    for (let i = 0; i < data.length; i++) {
+      view[i] = data[i];
+    }
+    blobPart = arrayBuffer;
+  } else {
+    // For any other type, try to convert to ArrayBuffer
+    try {
+      if (data && typeof data === 'object') {
+        // Handle typed arrays by copying to standard ArrayBuffer
+        if (data.buffer && data.byteLength !== undefined) {
+          const arrayBuffer = new ArrayBuffer(data.byteLength);
+          const sourceView = new Uint8Array(data.buffer, data.byteOffset || 0, data.byteLength);
+          const targetView = new Uint8Array(arrayBuffer);
+          targetView.set(sourceView);
+          blobPart = arrayBuffer;
+        } else {
+          // Last resort: treat as ArrayBuffer
+          blobPart = data as ArrayBuffer;
+        }
+      } else {
+        // Fallback for primitive types
+        blobPart = data as ArrayBuffer;
+      }
+    } catch (error) {
+      console.warn('Failed to process data, using fallback:', error);
+      // Create a simple ArrayBuffer from string representation
+      const str = String(data);
+      const arrayBuffer = new ArrayBuffer(str.length);
+      const view = new Uint8Array(arrayBuffer);
+      for (let i = 0; i < str.length; i++) {
+        view[i] = str.charCodeAt(i);
+      }
+      blobPart = arrayBuffer;
+    }
+  }
+  
+  return new Blob([blobPart], { type: FORMAT_MIME_TYPES[format] });
 }
 
 /**
@@ -36,49 +130,23 @@ export async function downloadQR(
 ): Promise<void> {
   try {
     if (!response.success || !response.data) {
-      throw new DownloadError('Invalid QR generation response');
+      throw new DownloadError('Invalid QR generation response', 'INVALID_RESPONSE');
     }
 
     onProgress?.(10, 'Preparing download...');
 
-    // Determine download options
-    const downloadOptions: DownloadOptions = {
-      filename: sanitizeFilename(options?.filename || response.filename),
-      format: options?.format || response.format,
-      data: response.data,
-      mimeType: options?.mimeType || FORMAT_MIME_TYPES[response.format]
-    };
+    // Convert response data to blob
+    const blob = responseDataToBlob(response.data, response.format);
 
     onProgress?.(30, 'Processing file...');
 
-    // Handle different data types
-    let blob: Blob;
-    
-    if (typeof response.data === 'string') {
-      if (response.data.startsWith('data:')) {
-        // Data URL
-        blob = dataURLtoBlob(response.data);
-      } else if (response.format === OutputFormat.SVG) {
-        // SVG string
-        blob = new Blob([response.data], { 
-          type: FORMAT_MIME_TYPES[OutputFormat.SVG] 
-        });
-      } else {
-        // Base64 string
-        const binaryString = atob(response.data);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
-        blob = new Blob([bytes], { type: downloadOptions.mimeType });
-      }
-    } else if (response.data instanceof Buffer) {
-      // Buffer (Node.js context)
-      blob = new Blob([response.data], { type: downloadOptions.mimeType });
-    } else {
-      // Already a Blob
-      blob = response.data as Blob;
-    }
+    // Determine download options with converted blob
+    const downloadOptions: DownloadOptions = {
+      filename: sanitizeFilename(options?.filename || response.filename),
+      format: options?.format || response.format,
+      data: blob,
+      mimeType: options?.mimeType || FORMAT_MIME_TYPES[response.format]
+    };
 
     onProgress?.(60, 'Initiating download...');
 
@@ -88,14 +156,19 @@ export async function downloadQR(
     onProgress?.(80, 'Starting download...');
 
     // Use file-saver to download
-    saveAs(blob, filename);
+    saveAs(downloadOptions.data as Blob, filename);
 
     onProgress?.(100, 'Download complete');
 
   } catch (error) {
-    const downloadError = error as DownloadError;
-    downloadError.code = downloadError.code || 'DOWNLOAD_FAILED';
-    throw downloadError;
+    if (error instanceof DownloadError) {
+      throw error;
+    }
+    throw new DownloadError(
+      error instanceof Error ? error.message : 'Unknown error occurred',
+      'DOWNLOAD_FAILED',
+      error
+    );
   }
 }
 
@@ -113,7 +186,7 @@ export async function downloadBatch(
   const successfulResponses = responses.filter(r => r.success && r.data);
   
   if (successfulResponses.length === 0) {
-    throw new DownloadError('No valid QR codes to download');
+    throw new DownloadError('No valid QR codes to download', 'NO_VALID_DATA');
   }
 
   onProgress?.(0, 'Starting batch download...');
@@ -154,26 +227,7 @@ export function getDownloadURL(response: QRGenerationResponse): string | null {
 
   // Create blob URL for other data types
   try {
-    let blob: Blob;
-    
-    if (typeof response.data === 'string') {
-      if (response.format === OutputFormat.SVG) {
-        blob = new Blob([response.data], { 
-          type: FORMAT_MIME_TYPES[OutputFormat.SVG] 
-        });
-      } else {
-        // Assume base64
-        const binaryString = atob(response.data);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
-        blob = new Blob([bytes], { type: FORMAT_MIME_TYPES[response.format] });
-      }
-    } else {
-      blob = response.data as Blob;
-    }
-
+    const blob = responseDataToBlob(response.data, response.format);
     return URL.createObjectURL(blob);
   } catch (error) {
     console.error('Failed to create download URL:', error);
@@ -278,6 +332,49 @@ export async function shareQR(
 }
 
 /**
+ * Get file size from data with improved type safety
+ */
+function getDataSize(data: string | Buffer | ArrayBuffer | Blob | any): number {
+  if (typeof data === 'string') {
+    if (data.startsWith('data:')) {
+      // Data URL - estimate from base64
+      const base64Data = data.split(',')[1];
+      return Math.round((base64Data.length * 3) / 4);
+    } else {
+      // Regular string
+      return new Blob([data]).size;
+    }
+  } else if (typeof Buffer !== 'undefined' && Buffer.isBuffer(data)) {
+    return data.length;
+  } else if (data instanceof ArrayBuffer) {
+    return data.byteLength;
+  } else if (data instanceof Blob) {
+    return data.size;
+  } else {
+    // Handle typed arrays and other array-like objects safely
+    if (data && typeof data === 'object') {
+      // Check for byteLength property (typed arrays)
+      if (typeof data.byteLength === 'number') {
+        return data.byteLength;
+      }
+      // Check for length property (regular arrays)
+      if (typeof data.length === 'number') {
+        return data.length;
+      }
+    }
+  }
+  
+  // Fallback: try to create blob to get size
+  try {
+    const blob = responseDataToBlob(data, OutputFormat.PNG);
+    return blob.size;
+  } catch (error) {
+    console.warn('Failed to calculate data size:', error);
+    return 0;
+  }
+}
+
+/**
  * Get file information from QR response
  */
 export function getFileInfo(response: QRGenerationResponse): {
@@ -293,26 +390,12 @@ export function getFileInfo(response: QRGenerationResponse): {
     dimensions: `${response.size.width}×${response.size.height}`
   };
 
-  // Try to calculate file size
+  // Calculate file size
   if (response.data) {
-    let sizeBytes = 0;
-    
-    if (typeof response.data === 'string') {
-      if (response.data.startsWith('data:')) {
-        // Data URL - estimate from base64
-        const base64Data = response.data.split(',')[1];
-        sizeBytes = Math.round((base64Data.length * 3) / 4);
-      } else {
-        // Regular string
-        sizeBytes = new Blob([response.data]).size;
-      }
-    } else if (response.data instanceof Buffer) {
-      sizeBytes = response.data.length;
-    } else {
-      sizeBytes = (response.data as Blob).size;
+    const sizeBytes = getDataSize(response.data);
+    if (sizeBytes > 0) {
+      info.size = formatFileSize(sizeBytes);
     }
-    
-    info.size = formatFileSize(sizeBytes);
   }
 
   return info;
@@ -526,13 +609,9 @@ export class DownloadManager {
     for (const response of this.downloadHistory) {
       stats.formatBreakdown[response.format]++;
       
-      // Estimate file size
+      // Calculate file size using helper function
       if (response.data) {
-        if (typeof response.data === 'string') {
-          totalSize += new Blob([response.data]).size;
-        } else {
-          totalSize += (response.data as Blob).size || 0;
-        }
+        totalSize += getDataSize(response.data);
       }
     }
 
