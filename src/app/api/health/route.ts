@@ -6,6 +6,9 @@ import {
   getErrorStats,
   logAPIRequest 
 } from '@/lib/server-utils';
+import os from 'os';
+import fs from 'fs';
+import path from 'path';
 
 // Mock APP_CONFIG if constants don't exist yet
 const APP_CONFIG = {
@@ -18,6 +21,87 @@ const APP_CONFIG = {
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 10; // 10 seconds timeout
+
+interface DependencyInfo {
+  version: string;
+  status: 'ok' | 'error';
+  required: boolean;
+  error?: string;
+  suggestion?: string;
+}
+
+interface TroubleshootingIssue {
+  issue: string;
+  solution: string;
+  documentation?: string;
+  error?: string;
+}
+
+interface TroubleshootingInfo {
+  commonIssues: TroubleshootingIssue[];
+  systemRequirements: {
+    node: string;
+    npm: string;
+    buildTools: string;
+  };
+  fallbackOptions: string[];
+}
+
+interface HealthResponse {
+  status: string;
+  application: {
+    name: string;
+    version: string;
+    description: string;
+    environment: string;
+    nodeVersion: string;
+    platform: string;
+    architecture: string;
+  };
+  server: {
+    processingTime: number;
+    timezone: string;
+    locale: string;
+  };
+  dependencies: Record<string, DependencyInfo> | { error: string; details: string };
+  endpoints: Record<string, string>;
+  limits: {
+    maxRequestSize: string;
+    timeout: string;
+    rateLimit: string;
+  };
+  recommendations: string[];
+}
+
+interface DetailedHealthResponse extends HealthResponse {
+  system: {
+    platform: string;
+    architecture: string;
+    nodeVersion: string;
+    cpus: number;
+    totalMemory: number;
+    freeMemory: number;
+    loadAverage: number[];
+    hostname: string;
+    userInfo?: {
+      uid: number;
+      gid: number;
+    } | null;
+  };
+  features: {
+    qrGeneration: boolean;
+    fileSystem: boolean;
+    network: boolean;
+  };
+  troubleshooting: TroubleshootingInfo;
+  detailedMetrics?: unknown;
+  errorDetails?: unknown;
+  recentActivity?: {
+    note: string;
+    requestCount: number;
+    errorCount: number;
+  };
+}
 
 /**
  * Handle GET request for health check
@@ -45,7 +129,7 @@ export async function GET(request: NextRequest) {
     const httpStatus = overallStatus === 'healthy' ? 200 : overallStatus === 'degraded' ? 200 : 503;
 
     // Create response data
-    const responseData = {
+    const responseData: HealthResponse = {
       ...healthData,
       status: overallStatus,
       application: {
@@ -136,39 +220,48 @@ export async function POST(request: NextRequest) {
     const dependencyStatus = await getDependencyStatus();
 
     // Build detailed response
-    const responseData: any = {
+    const responseData: DetailedHealthResponse = {
       ...healthData,
       application: {
         name: APP_CONFIG.name,
         version: APP_CONFIG.version,
         description: APP_CONFIG.description,
         environment: process.env.NODE_ENV || 'unknown',
-        buildTime: process.env.BUILD_TIME || 'unknown',
-        commitHash: process.env.COMMIT_HASH || 'unknown'
+        nodeVersion: process.version,
+        platform: process.platform,
+        architecture: process.arch
       },
       server: {
         processingTime,
-        pid: process.pid,
-        ppid: process.ppid || 0,
-        cwd: process.cwd(),
-        execPath: process.execPath,
-        argv: process.argv
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        locale: process.env.LANG || 'en_US'
       },
       system: {
         platform: process.platform,
         architecture: process.arch,
         nodeVersion: process.version,
-        cpus: require('os').cpus().length,
-        totalMemory: require('os').totalmem(),
-        freeMemory: require('os').freemem(),
-        loadAverage: require('os').loadavg(),
-        hostname: require('os').hostname(),
+        cpus: os.cpus().length,
+        totalMemory: os.totalmem(),
+        freeMemory: os.freemem(),
+        loadAverage: os.loadavg(),
+        hostname: os.hostname(),
         userInfo: process.getuid ? {
           uid: process.getuid(),
           gid: process.getgid?.() || 0
         } : null
       },
       dependencies: dependencyStatus,
+      endpoints: {
+        'GET /api/health': 'Health check endpoint',
+        'POST /api/generate-qr': 'QR code generation endpoint',
+        'GET /api/generate-qr': 'API documentation endpoint'
+      },
+      limits: {
+        maxRequestSize: '10MB',
+        timeout: '30s',
+        rateLimit: '100 requests/minute'
+      },
+      recommendations: generateRecommendations(dependencyStatus),
       features: {
         qrGeneration: await testQRGeneration(),
         fileSystem: testFileSystemAccess(),
@@ -233,7 +326,7 @@ export async function POST(request: NextRequest) {
 /**
  * Handle HEAD request for lightweight health check
  */
-export async function HEAD(request: NextRequest) {
+export async function HEAD() {
   const startTime = Date.now();
   const requestId = `health_head_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
@@ -286,8 +379,8 @@ export async function OPTIONS() {
  */
 async function testQRGeneration(): Promise<boolean> {
   try {
-    // Try to require and test QR code generation
-    const QRCode = require('qrcode');
+    // Dynamic import to avoid webpack warnings
+    const QRCode = await import('qrcode');
     const testData = 'test-health-check';
     await QRCode.toString(testData, { type: 'svg', width: 100 });
     return true;
@@ -302,9 +395,6 @@ async function testQRGeneration(): Promise<boolean> {
  */
 function testFileSystemAccess(): boolean {
   try {
-    // Simple test to ensure we can access file system
-    const fs = require('fs');
-    
     // Check if we can read the current directory
     const currentDir = process.cwd();
     fs.accessSync(currentDir, fs.constants.R_OK);
@@ -319,17 +409,13 @@ function testFileSystemAccess(): boolean {
 /**
  * Get dependency status with detailed error information
  */
-async function getDependencyStatus(): Promise<Record<string, any>> {
+async function getDependencyStatus(): Promise<Record<string, DependencyInfo> | { error: string; details: string }> {
   try {
-    // Read package.json to get dependency versions
-    const fs = require('fs');
-    const path = require('path');
-    
     const packageJsonPath = path.join(process.cwd(), 'package.json');
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
     
     // Test critical dependencies
-    const dependencies = {
+    const dependencies: Record<string, DependencyInfo> = {
       next: {
         version: packageJson.dependencies?.next || 'unknown',
         status: 'ok',
@@ -356,16 +442,15 @@ async function getDependencyStatus(): Promise<Record<string, any>> {
 /**
  * Test if a dependency can be imported with detailed error info
  */
-async function testDependencyDetailed(packageName: string, version?: string): Promise<any> {
+async function testDependencyDetailed(packageName: string, version?: string): Promise<DependencyInfo> {
   try {
-    // Use require instead of dynamic import to avoid webpack warnings
-    let module;
+    // Use dynamic imports to avoid webpack warnings
     if (packageName === 'qrcode') {
-      module = require('qrcode');
+      await import('qrcode');
     } else if (packageName === 'canvas') {
-      module = require('canvas');
+      await import('canvas');
     } else {
-      module = require(packageName);
+      await import(packageName);
     }
     
     return {
@@ -387,7 +472,7 @@ async function testDependencyDetailed(packageName: string, version?: string): Pr
 /**
  * Get installation suggestions for failed dependencies
  */
-function getSuggestionForDependency(packageName: string, error: any): string {
+function getSuggestionForDependency(packageName: string, error: unknown): string {
   const errorMessage = error instanceof Error ? error.message : String(error);
   
   if (packageName === 'canvas') {
@@ -407,9 +492,15 @@ function getSuggestionForDependency(packageName: string, error: any): string {
 /**
  * Check if there are critical dependency errors
  */
-function checkCriticalDependencies(dependencies: Record<string, any>): boolean {
+function checkCriticalDependencies(dependencies: Record<string, DependencyInfo> | { error: string; details: string }): boolean {
+  // Check if dependencies object has error property (fallback case)
+  if ('error' in dependencies) {
+    return true; // Critical if we can't even check dependencies
+  }
+  
   // Check if QR code generation is available - this is essential
-  if (dependencies.qrcode && dependencies.qrcode.status === 'error') {
+  const qrcodeDep = dependencies.qrcode;
+  if (qrcodeDep && qrcodeDep.status === 'error') {
     return true; // Critical error - QR code is essential
   }
   
@@ -420,14 +511,22 @@ function checkCriticalDependencies(dependencies: Record<string, any>): boolean {
 /**
  * Generate recommendations based on dependency status
  */
-function generateRecommendations(dependencies: Record<string, any>): string[] {
+function generateRecommendations(dependencies: Record<string, DependencyInfo> | { error: string; details: string }): string[] {
   const recommendations: string[] = [];
   
-  if (dependencies.qrcode && dependencies.qrcode.status === 'error') {
+  // Check if dependencies object has error property (fallback case)
+  if ('error' in dependencies) {
+    recommendations.push('Unable to check dependencies - verify package.json exists');
+    return recommendations;
+  }
+  
+  const qrcodeDep = dependencies.qrcode;
+  if (qrcodeDep && qrcodeDep.status === 'error') {
     recommendations.push('Install qrcode package: npm install qrcode @types/qrcode');
   }
   
-  if (dependencies.canvas && dependencies.canvas.status === 'error') {
+  const canvasDep = dependencies.canvas;
+  if (canvasDep && canvasDep.status === 'error') {
     recommendations.push('For Canvas support: npm install canvas (requires build tools)');
     recommendations.push('Alternative: Use SVG-based QR generation without Canvas');
   }
@@ -442,8 +541,8 @@ function generateRecommendations(dependencies: Record<string, any>): string[] {
 /**
  * Generate troubleshooting information
  */
-function generateTroubleshootingInfo(dependencies: Record<string, any>): any {
-  const troubleshooting = {
+function generateTroubleshootingInfo(dependencies: Record<string, DependencyInfo> | { error: string; details: string }): TroubleshootingInfo {
+  const troubleshooting: TroubleshootingInfo = {
     commonIssues: [
       {
         issue: 'Canvas installation fails',
@@ -455,12 +554,7 @@ function generateTroubleshootingInfo(dependencies: Record<string, any>): any {
         solution: 'Ensure qrcode package is installed: npm install qrcode @types/qrcode',
         documentation: 'https://www.npmjs.com/package/qrcode'
       }
-    ] as Array<{
-      issue: string;
-      solution: string;
-      documentation?: string;
-      error?: string;
-    }>,
+    ],
     systemRequirements: {
       node: '>=18.0.0',
       npm: '>=8.0.0',
@@ -473,13 +567,25 @@ function generateTroubleshootingInfo(dependencies: Record<string, any>): any {
     ]
   };
 
+  // Check if dependencies object has error property (fallback case)
+  if ('error' in dependencies) {
+    const errorDeps = dependencies as { error: string; details: string };
+    troubleshooting.commonIssues.unshift({
+      issue: 'Cannot read package dependencies',
+      solution: 'Verify package.json exists and is readable',
+      error: errorDeps.details
+    });
+    return troubleshooting;
+  }
+
   // Add specific troubleshooting for failed dependencies
-  Object.entries(dependencies).forEach(([name, info]: [string, any]) => {
+  const depRecord = dependencies as Record<string, DependencyInfo>;
+  Object.entries(depRecord).forEach(([name, info]) => {
     if (info.status === 'error' && info.suggestion) {
       troubleshooting.commonIssues.unshift({
         issue: `${name} dependency failed`,
         solution: info.suggestion,
-        error: info.error
+        error: info.error || undefined
       });
     }
   });

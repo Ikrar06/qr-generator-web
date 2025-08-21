@@ -8,7 +8,7 @@ interface PerformanceMetric {
   duration: number;
   timestamp: number;
   success: boolean;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // Request log interface
@@ -19,7 +19,7 @@ interface RequestLog {
   userAgent: string;
   ip: string;
   timestamp: number;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // Error log interface
@@ -32,6 +32,76 @@ interface ErrorLog {
   ip?: string;
   timestamp: number;
   severity: 'low' | 'medium' | 'high' | 'critical';
+}
+
+// Rate limit data interface
+interface RateLimitData {
+  requests: number;
+  resetTime: number;
+}
+
+// API Response interface
+interface APIResponse<T = unknown> {
+  success: boolean;
+  timestamp: number;
+  data?: T;
+  error?: {
+    message: string;
+    code: string;
+    timestamp: number;
+  };
+  meta?: Record<string, unknown>;
+}
+
+// Request info interface
+interface RequestInfo {
+  method: string;
+  url: string;
+  userAgent: string;
+  ip: string;
+  contentType: string;
+  contentLength: string;
+  referer: string;
+  origin: string;
+  timestamp: number;
+}
+
+// Performance stats interface
+interface PerformanceStats {
+  averageResponseTime: number;
+  totalRequests: number;
+  successRate: number;
+  recentMetrics: PerformanceMetric[];
+}
+
+// Error stats interface
+interface ErrorStats {
+  totalErrors: number;
+  errorsBySeverity: Record<string, number>;
+  recentErrors: ErrorLog[];
+}
+
+// Health data interface
+interface HealthData {
+  status: 'healthy' | 'unhealthy';
+  uptime: number;
+  memory: NodeJS.MemoryUsage;
+  performance: PerformanceStats;
+  errors: ErrorStats;
+  timestamp: number;
+}
+
+// Rate limit result interface
+interface RateLimitResult {
+  allowed: boolean;
+  resetTime: number;
+  remaining: number;
+}
+
+// Header validation result interface
+interface HeaderValidationResult {
+  isValid: boolean;
+  errors: string[];
 }
 
 // In-memory storage for logs (in production, use external logging service)
@@ -54,7 +124,7 @@ const LOG_CONFIG = {
 export async function logAPIRequest(
   request: NextRequest,
   requestId: string,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ): Promise<void> {
   try {
     const log: RequestLog = {
@@ -131,7 +201,7 @@ export async function logAPIError(
 export async function measurePerformance<T>(
   operationName: string,
   operation: () => Promise<T>,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ): Promise<T> {
   if (!LOG_CONFIG.ENABLE_PERFORMANCE_METRICS) {
     return await operation();
@@ -196,9 +266,9 @@ export function formatAPIResponse<T>(
   success: boolean,
   data?: T,
   error?: string,
-  metadata?: Record<string, any>
-): any {
-  const response: any = {
+  metadata?: Record<string, unknown>
+): APIResponse<T> {
+  const response: APIResponse<T> = {
     success,
     timestamp: Date.now()
   };
@@ -225,7 +295,7 @@ export function formatAPIResponse<T>(
 /**
  * Validate request headers
  */
-export function validateRequestHeaders(request: NextRequest): { isValid: boolean; errors: string[] } {
+export function validateRequestHeaders(request: NextRequest): HeaderValidationResult {
   const errors: string[] = [];
   const contentType = request.headers.get('content-type') || '';
   const userAgent = request.headers.get('user-agent') || '';
@@ -332,7 +402,7 @@ export function checkRateLimit(
   clientId: string, 
   windowMs: number = 60000, 
   maxRequests: number = 100
-): { allowed: boolean; resetTime: number; remaining: number } {
+): RateLimitResult {
   // This is a basic in-memory rate limiter
   // In production, use Redis or similar
   
@@ -385,7 +455,7 @@ export function checkRateLimit(
 /**
  * Get comprehensive request information for logging
  */
-export function getRequestInfo(request: NextRequest): Record<string, any> {
+export function getRequestInfo(request: NextRequest): RequestInfo {
   return {
     method: request.method,
     url: request.url,
@@ -402,12 +472,7 @@ export function getRequestInfo(request: NextRequest): Record<string, any> {
 /**
  * Get performance statistics
  */
-export function getPerformanceStats(): {
-  averageResponseTime: number;
-  totalRequests: number;
-  successRate: number;
-  recentMetrics: PerformanceMetric[];
-} {
+export function getPerformanceStats(): PerformanceStats {
   if (performanceMetrics.length === 0) {
     return {
       averageResponseTime: 0,
@@ -431,11 +496,7 @@ export function getPerformanceStats(): {
 /**
  * Get error statistics
  */
-export function getErrorStats(): {
-  totalErrors: number;
-  errorsBySeverity: Record<string, number>;
-  recentErrors: ErrorLog[];
-} {
+export function getErrorStats(): ErrorStats {
   const errorsBySeverity = errorLogs.reduce((acc, log) => {
     acc[log.severity] = (acc[log.severity] || 0) + 1;
     return acc;
@@ -451,14 +512,7 @@ export function getErrorStats(): {
 /**
  * Health check data
  */
-export function getHealthData(): {
-  status: 'healthy' | 'unhealthy';
-  uptime: number;
-  memory: NodeJS.MemoryUsage;
-  performance: ReturnType<typeof getPerformanceStats>;
-  errors: ReturnType<typeof getErrorStats>;
-  timestamp: number;
-} {
+export function getHealthData(): HealthData {
   const performance = getPerformanceStats();
   const errors = getErrorStats();
   
@@ -574,10 +628,7 @@ function determineSeverity(error: unknown): 'low' | 'medium' | 'high' | 'critica
 }
 
 // Simple in-memory rate limit store
-const rateLimitStore = new Map<string, {
-  requests: number;
-  resetTime: number;
-}>();
+const rateLimitStore = new Map<string, RateLimitData>();
 
 // Export performance and error arrays for testing
 export const testUtils = {
