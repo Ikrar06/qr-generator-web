@@ -1,7 +1,7 @@
 // src/components/UserGuide.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { QRDataType, QRMode, OutputFormat, ErrorCorrectionLevel } from '@/types/qr-types';
@@ -21,12 +21,12 @@ interface GuideSectionProps {
 
 function GuideSection({ id, title, children, icon }: GuideSectionProps) {
   return (
-    <div id={id} className="mb-8">
-      <div className="flex items-center gap-2 mb-4">
-        {icon && <span className="text-2xl">{icon}</span>}
-        <h3 className="text-xl font-bold text-gray-900">{title}</h3>
+    <div id={id} className="mb-8 md:mb-12">
+      <div className="flex items-center gap-3 mb-4 md:mb-6">
+        {icon && <span className="text-2xl md:text-3xl">{icon}</span>}
+        <h3 className="text-xl md:text-2xl font-bold text-gray-900">{title}</h3>
       </div>
-      <div className="prose prose-blue max-w-none">
+      <div className="prose prose-blue max-w-none text-sm md:text-base">
         {children}
       </div>
     </div>
@@ -40,7 +40,7 @@ interface CodeBlockProps {
 
 function CodeBlock({ children, className = '' }: CodeBlockProps) {
   return (
-    <div className={`bg-gray-100 rounded-lg p-3 font-mono text-sm overflow-x-auto ${className}`}>
+    <div className={`bg-gray-100 rounded-lg p-3 md:p-4 font-mono text-xs md:text-sm overflow-x-auto ${className}`}>
       {children}
     </div>
   );
@@ -57,21 +57,21 @@ interface FeatureGridProps {
 
 function FeatureGrid({ features }: FeatureGridProps) {
   return (
-    <div className="grid md:grid-cols-2 gap-4 my-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 my-6 md:my-8">
       {features.map((feature, index) => (
         <div 
           key={index}
-          className={`p-4 rounded-lg border ${
+          className={`p-4 md:p-5 rounded-lg border ${
             feature.highlight 
               ? 'bg-blue-50 border-blue-200' 
               : 'bg-gray-50 border-gray-200'
           }`}
         >
-          <div className="flex items-start gap-3">
-            <span className="text-2xl flex-shrink-0">{feature.icon}</span>
+          <div className="flex items-start gap-3 md:gap-4">
+            <span className="text-xl md:text-2xl flex-shrink-0">{feature.icon}</span>
             <div>
-              <h5 className="font-semibold text-gray-900 mb-1">{feature.title}</h5>
-              <p className="text-sm text-gray-600">{feature.description}</p>
+              <h5 className="font-semibold text-gray-900 mb-2 text-sm md:text-base">{feature.title}</h5>
+              <p className="text-xs md:text-sm text-gray-600">{feature.description}</p>
             </div>
           </div>
         </div>
@@ -91,17 +91,17 @@ interface StepListProps {
 
 function StepList({ steps }: StepListProps) {
   return (
-    <div className="space-y-4 my-6">
+    <div className="space-y-4 md:space-y-6 my-6 md:my-8">
       {steps.map((step) => (
-        <div key={step.number} className="flex gap-4">
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-            <span className="text-sm font-bold text-blue-600">{step.number}</span>
+        <div key={step.number} className="flex gap-4 md:gap-5">
+          <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-sm md:text-base font-bold text-blue-600">{step.number}</span>
           </div>
-          <div className="flex-1">
-            <h5 className="font-semibold text-gray-900 mb-1">{step.title}</h5>
-            <p className="text-gray-600 text-sm mb-2">{step.description}</p>
+          <div className="flex-1 min-w-0">
+            <h5 className="font-semibold text-gray-900 mb-2 text-sm md:text-base">{step.title}</h5>
+            <p className="text-gray-600 text-sm md:text-base mb-3">{step.description}</p>
             {step.tip && (
-              <div className="bg-yellow-50 border-l-4 border-yellow-300 p-3 text-sm">
+              <div className="bg-yellow-50 border-l-4 border-yellow-300 p-3 md:p-4 text-sm">
                 <strong className="text-yellow-800">Tip:</strong>
                 <span className="text-yellow-700 ml-1">{step.tip}</span>
               </div>
@@ -115,11 +115,27 @@ function StepList({ steps }: StepListProps) {
 
 export default function UserGuide({ isOpen, onClose, startWithSection }: UserGuideProps) {
   const [activeSection, setActiveSection] = useState(startWithSection || 'getting-started');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Handle body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const scrollToSection = (sectionId: string) => {
     setActiveSection(sectionId);
+    setSidebarOpen(false);
+    
     setTimeout(() => {
       const element = document.getElementById(sectionId);
       if (element) {
@@ -141,71 +157,89 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
 
   return (
     <div 
-      className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 
-                 flex items-center justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center"
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-xl shadow-2xl border border-gray-200 
-                   w-full max-w-6xl max-h-[90vh] overflow-hidden
-                   animate-scale-in flex" 
+        className="bg-white w-full h-full md:w-[95vw] md:max-w-6xl md:h-[95vh] 
+                   md:rounded-xl md:shadow-2xl md:border md:border-gray-200 
+                   md:my-4 overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Sidebar Navigation */}
-        <div className="w-64 bg-gray-50 border-r border-gray-200 flex-shrink-0">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-bold text-gray-900">User Guide</h3>
-            <p className="text-sm text-gray-600 mt-1">Complete documentation</p>
-          </div>
-          
-          <nav className="p-4">
-            <ul className="space-y-2">
-              {sections.map((section) => (
-                <li key={section.id}>
-                  <button
-                    onClick={() => scrollToSection(section.id)}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors
-                               flex items-center gap-2 ${
-                      activeSection === section.id
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                    }`}
-                  >
-                    <span>{section.icon}</span>
-                    {section.title}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col">
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">QR Generator Guide</h2>
-              <p className="text-gray-600">Everything you need to create perfect QR codes</p>
-            </div>
+        
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-200 bg-gray-50 flex-shrink-0">
+          <div className="flex items-center gap-3">
             <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors p-1 
-                         rounded-lg hover:bg-gray-100"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="md:hidden p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-lg hover:bg-gray-100"
             >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                      d={sidebarOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
               </svg>
             </button>
+            <div>
+              <h2 className="text-lg md:text-xl font-bold text-gray-900">QR Generator Guide</h2>
+              <p className="text-sm text-gray-600 hidden md:block">Complete documentation</p>
+            </div>
           </div>
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-lg hover:bg-gray-100"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex flex-1 min-h-0">
           
-          {/* Content Area */}
-          <div className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-4xl">
+          {/* Sidebar Navigation */}
+          <div className={`${
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } md:translate-x-0 fixed md:relative inset-y-0 left-0 z-20 w-64 bg-gray-50 
+          border-r border-gray-200 transition-transform duration-300 ease-in-out
+          md:flex md:flex-col flex-shrink-0`}>
+            
+            {/* Mobile backdrop */}
+            {sidebarOpen && (
+              <div 
+                className="md:hidden fixed inset-0 bg-white bg-opacity-25 z-[-1]"
+                onClick={() => setSidebarOpen(false)}
+              />
+            )}
+            
+            <nav className="p-4 overflow-y-auto flex-1">
+              <ul className="space-y-2">
+                {sections.map((section) => (
+                  <li key={section.id}>
+                    <button
+                      onClick={() => scrollToSection(section.id)}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium 
+                                 transition-colors flex items-center gap-2 ${
+                        activeSection === section.id
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      }`}
+                    >
+                      <span className="text-base">{section.icon}</span>
+                      <span className="truncate">{section.title}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-4 md:p-8 max-w-4xl">
               
               {/* Getting Started */}
               <GuideSection id="getting-started" title="Getting Started" icon="🚀">
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 mb-6 text-base">
                   Creating QR codes with our generator is simple and fast. Follow these basic steps to get started.
                 </p>
 
@@ -242,8 +276,8 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                   }
                 ]} />
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
-                  <h4 className="font-semibold text-blue-900 mb-2">Quick Start Tips</h4>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 md:p-5 mt-6">
+                  <h4 className="font-semibold text-blue-900 mb-3 text-base">Quick Start Tips</h4>
                   <ul className="text-sm text-blue-800 space-y-1">
                     <li>• Start with a simple URL or text to get familiar with the interface</li>
                     <li>• Use the preview to verify your QR code before downloading</li>
@@ -255,7 +289,7 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
 
               {/* Data Types */}
               <GuideSection id="data-types" title="Supported Data Types" icon="📝">
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 mb-6 text-base">
                   Our generator supports multiple data types, each with specific formatting and use cases.
                 </p>
 
@@ -294,31 +328,31 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                 ]} />
 
                 <div className="space-y-4 mt-6">
-                  <h4 className="font-semibold text-gray-900">Data Type Examples:</h4>
+                  <h4 className="font-semibold text-gray-900 text-base">Data Type Examples:</h4>
                   
                   <div className="space-y-3">
                     <div>
-                      <strong className="text-gray-900">URL:</strong>
+                      <strong className="text-gray-900 text-sm">URL:</strong>
                       <CodeBlock>https://www.example.com</CodeBlock>
                     </div>
                     
                     <div>
-                      <strong className="text-gray-900">Email:</strong>
+                      <strong className="text-gray-900 text-sm">Email:</strong>
                       <CodeBlock>hello@example.com</CodeBlock>
                     </div>
                     
                     <div>
-                      <strong className="text-gray-900">Phone:</strong>
+                      <strong className="text-gray-900 text-sm">Phone:</strong>
                       <CodeBlock>+1-234-567-8900</CodeBlock>
                     </div>
                     
                     <div>
-                      <strong className="text-gray-900">SMS:</strong>
+                      <strong className="text-gray-900 text-sm">SMS:</strong>
                       <CodeBlock>sms:+1234567890:Hello from QR code!</CodeBlock>
                     </div>
                     
                     <div>
-                      <strong className="text-gray-900">WiFi:</strong>
+                      <strong className="text-gray-900 text-sm">WiFi:</strong>
                       <CodeBlock>WIFI:T:WPA;S:NetworkName;P:Password;;</CodeBlock>
                     </div>
                   </div>
@@ -327,19 +361,19 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
 
               {/* Generation Modes */}
               <GuideSection id="modes" title="Generation Modes" icon="🎨">
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 mb-6 text-base">
                   Choose the right generation mode for your specific use case and quality requirements.
                 </p>
 
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                   <Card className="border-2">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <span className="text-2xl">⚡</span>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <span className="text-xl">⚡</span>
                         Basic Mode
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-0">
                       <ul className="text-sm space-y-2">
                         <li>✓ Fastest generation</li>
                         <li>✓ Standard black and white</li>
@@ -351,13 +385,13 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                   </Card>
 
                   <Card className="border-2 border-blue-200 bg-blue-50">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-blue-900">
-                        <span className="text-2xl">🎨</span>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-blue-900 text-base">
+                        <span className="text-xl">🎨</span>
                         Colored Mode
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-0">
                       <ul className="text-sm space-y-2 text-blue-800">
                         <li>✓ Custom colors</li>
                         <li>✓ Brand matching</li>
@@ -369,13 +403,13 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                   </Card>
 
                   <Card className="border-2">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <span className="text-2xl">📐</span>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <span className="text-xl">📐</span>
                         SVG Mode
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-0">
                       <ul className="text-sm space-y-2">
                         <li>✓ Vector graphics</li>
                         <li>✓ Infinite scalability</li>
@@ -387,13 +421,13 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                   </Card>
 
                   <Card className="border-2 border-green-200 bg-green-50">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-green-900">
-                        <span className="text-2xl">🏆</span>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-green-900 text-base">
+                        <span className="text-xl">🏆</span>
                         High Quality
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-0">
                       <ul className="text-sm space-y-2 text-green-800">
                         <li>✓ Maximum error correction</li>
                         <li>✓ Damage resistance</li>
@@ -408,13 +442,13 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
 
               {/* Customization Options */}
               <GuideSection id="customization" title="Customization Options" icon="⚙️">
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 mb-6 text-base">
                   Fine-tune your QR codes with advanced customization options for perfect results.
                 </p>
 
                 <div className="space-y-6">
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">Color Customization</h4>
+                    <h4 className="font-semibold text-gray-900 mb-3 text-base">Color Customization</h4>
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <ul className="text-sm space-y-2">
                         <li><strong>Foreground Color:</strong> The QR code pattern color (default: black)</li>
@@ -426,7 +460,7 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                   </div>
 
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">Size Settings</h4>
+                    <h4 className="font-semibold text-gray-900 mb-3 text-base">Size Settings</h4>
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <ul className="text-sm space-y-2">
                         <li><strong>Range:</strong> 128px to 1024px</li>
@@ -438,23 +472,23 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                   </div>
 
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">Error Correction Levels</h4>
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <h4 className="font-semibold text-gray-900 mb-3 text-base">Error Correction Levels</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div className="bg-red-50 border border-red-200 p-3 rounded">
-                        <strong className="text-red-800">Low (7%)</strong>
-                        <p className="text-sm text-red-700 mt-1">Maximum data capacity, minimal protection</p>
+                        <strong className="text-red-800 text-sm">Low (7%)</strong>
+                        <p className="text-xs text-red-700 mt-1">Maximum data capacity, minimal protection</p>
                       </div>
                       <div className="bg-yellow-50 border border-yellow-200 p-3 rounded">
-                        <strong className="text-yellow-800">Medium (15%)</strong>
-                        <p className="text-sm text-yellow-700 mt-1">Balanced capacity and protection</p>
+                        <strong className="text-yellow-800 text-sm">Medium (15%)</strong>
+                        <p className="text-xs text-yellow-700 mt-1">Balanced capacity and protection</p>
                       </div>
                       <div className="bg-blue-50 border border-blue-200 p-3 rounded">
-                        <strong className="text-blue-800">Quartile (25%)</strong>
-                        <p className="text-sm text-blue-700 mt-1">Good for print and outdoor use</p>
+                        <strong className="text-blue-800 text-sm">Quartile (25%)</strong>
+                        <p className="text-xs text-blue-700 mt-1">Good for print and outdoor use</p>
                       </div>
                       <div className="bg-green-50 border border-green-200 p-3 rounded">
-                        <strong className="text-green-800">High (30%)</strong>
-                        <p className="text-sm text-green-700 mt-1">Maximum protection, reduced capacity</p>
+                        <strong className="text-green-800 text-sm">High (30%)</strong>
+                        <p className="text-xs text-green-700 mt-1">Maximum protection, reduced capacity</p>
                       </div>
                     </div>
                   </div>
@@ -463,19 +497,19 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
 
               {/* Download Formats */}
               <GuideSection id="formats" title="Download Formats" icon="💾">
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 mb-6 text-base">
                   Choose the right file format for your intended use case and platform compatibility.
                 </p>
 
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Card className="border-2 border-green-200 bg-green-50">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-green-900">
-                        <span className="text-2xl">🖼️</span>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-green-900 text-base">
+                        <span className="text-xl">🖼️</span>
                         PNG Format
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-0">
                       <div className="space-y-2 text-sm">
                         <div className="text-green-800">
                           <strong>Advantages:</strong>
@@ -494,13 +528,13 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                   </Card>
 
                   <Card className="border-2 border-blue-200 bg-blue-50">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-blue-900">
-                        <span className="text-2xl">📐</span>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-blue-900 text-base">
+                        <span className="text-xl">📐</span>
                         SVG Format
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-0">
                       <div className="space-y-2 text-sm">
                         <div className="text-blue-800">
                           <strong>Advantages:</strong>
@@ -519,13 +553,13 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                   </Card>
 
                   <Card className="border-2">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <span className="text-2xl">🗜️</span>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <span className="text-xl">🗜️</span>
                         JPG Format
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-0">
                       <div className="space-y-2 text-sm">
                         <div className="text-gray-800">
                           <strong>Advantages:</strong>
@@ -548,13 +582,13 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                   </Card>
 
                   <Card className="border-2">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <span className="text-2xl">⚡</span>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <span className="text-xl">⚡</span>
                         WEBP Format
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-0">
                       <div className="space-y-2 text-sm">
                         <div className="text-gray-800">
                           <strong>Advantages:</strong>
@@ -579,13 +613,13 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
 
               {/* Best Practices */}
               <GuideSection id="best-practices" title="Best Practices" icon="✨">
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 mb-6 text-base">
                   Follow these guidelines to create QR codes that scan reliably and provide great user experience.
                 </p>
 
                 <div className="space-y-6">
                   <div>
-                    <h4 className="font-semibold text-green-600 mb-3">Do These Things</h4>
+                    <h4 className="font-semibold text-green-600 mb-3 text-base">Do These Things</h4>
                     <div className="bg-green-50 border-l-4 border-green-400 p-4">
                       <ul className="space-y-2 text-sm text-green-800">
                         <li>• <strong>Test thoroughly:</strong> Scan with multiple devices and apps before publishing</li>
@@ -601,7 +635,7 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                   </div>
 
                   <div>
-                    <h4 className="font-semibold text-red-600 mb-3">Avoid These Mistakes</h4>
+                    <h4 className="font-semibold text-red-600 mb-3 text-base">Avoid These Mistakes</h4>
                     <div className="bg-red-50 border-l-4 border-red-400 p-4">
                       <ul className="space-y-2 text-sm text-red-800">
                         <li>• <strong>Don't make them too small:</strong> Minimum 2cm for print, 100px for digital</li>
@@ -617,9 +651,9 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                   </div>
 
                   <div>
-                    <h4 className="font-semibold text-blue-600 mb-3">Size Guidelines</h4>
+                    <h4 className="font-semibold text-blue-600 mb-3 text-base">Size Guidelines</h4>
                     <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-                      <div className="grid md:grid-cols-3 gap-4 text-sm">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                         <div>
                           <strong className="text-blue-900">Digital Use</strong>
                           <ul className="text-blue-800 mt-2 space-y-1">
@@ -652,7 +686,7 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
 
               {/* Troubleshooting */}
               <GuideSection id="troubleshooting" title="Troubleshooting" icon="🔧">
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 mb-6 text-base">
                   Common issues and their solutions to ensure your QR codes work perfectly.
                 </p>
 
@@ -729,20 +763,20 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                   ].map((item, index) => (
                     <div key={index} className="border border-gray-200 rounded-lg p-4">
                       <div className="flex items-start gap-3 mb-3">
-                        <span className="text-2xl">{item.icon}</span>
-                        <div className="flex-1">
-                          <h5 className="font-semibold text-gray-900">{item.problem}</h5>
-                          <p className="text-xs text-gray-500 mt-1">{item.tips}</p>
+                        <span className="text-2xl flex-shrink-0">{item.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <h5 className="font-semibold text-gray-900 text-base">{item.problem}</h5>
+                          <p className="text-sm text-gray-500 mt-1">{item.tips}</p>
                         </div>
                       </div>
                       
                       <div className="ml-11">
-                        <h6 className="font-medium text-gray-800 mb-2">Solutions:</h6>
+                        <h6 className="font-medium text-gray-800 mb-2 text-sm">Solutions:</h6>
                         <ul className="space-y-1 text-sm text-gray-700">
                           {item.solutions.map((solution, sIndex) => (
                             <li key={sIndex} className="flex items-start gap-2">
-                              <span className="text-green-500 mt-1">•</span>
-                              {solution}
+                              <span className="text-green-500 mt-1 flex-shrink-0">•</span>
+                              <span className="min-w-0">{solution}</span>
                             </li>
                           ))}
                         </ul>
@@ -752,10 +786,10 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                 </div>
 
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-6">
-                  <h4 className="font-semibold text-yellow-900 mb-2">Still Having Issues?</h4>
+                  <h4 className="font-semibold text-yellow-900 mb-2 text-base">Still Having Issues?</h4>
                   <div className="text-sm text-yellow-800 space-y-2">
                     <p>If you're still experiencing problems:</p>
-                    <ul className="list-disc list-inside space-y-1">
+                    <ul className="list-disc list-inside space-y-1 ml-2">
                       <li>Try generating a simple text QR code to test basic functionality</li>
                       <li>Test with multiple QR scanner apps on different devices</li>
                       <li>Check our FAQ section for more specific issues</li>
@@ -767,13 +801,13 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
 
               {/* Advanced Tips */}
               <GuideSection id="advanced" title="Advanced Tips & Tricks" icon="🎯">
-                <p className="text-gray-600 mb-6">
+                <p className="text-gray-600 mb-6 text-base">
                   Professional tips for creating exceptional QR codes and maximizing their effectiveness.
                 </p>
 
                 <div className="space-y-6">
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">Design Integration</h4>
+                    <h4 className="font-semibold text-gray-900 mb-3 text-base">Design Integration</h4>
                     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
                       <ul className="text-sm space-y-2 text-blue-900">
                         <li>• <strong>Brand Colors:</strong> Use your brand colors but maintain 70%+ contrast</li>
@@ -786,7 +820,7 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                   </div>
 
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">Analytics & Tracking</h4>
+                    <h4 className="font-semibold text-gray-900 mb-3 text-base">Analytics & Tracking</h4>
                     <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
                       <ul className="text-sm space-y-2 text-green-900">
                         <li>• <strong>URL Shorteners:</strong> Use services like bit.ly or tinyurl.com for tracking</li>
@@ -799,7 +833,7 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                   </div>
 
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">Production Guidelines</h4>
+                    <h4 className="font-semibold text-gray-900 mb-3 text-base">Production Guidelines</h4>
                     <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-200">
                       <ul className="text-sm space-y-2 text-purple-900">
                         <li>• <strong>Print Resolution:</strong> Minimum 300 DPI for professional printing</li>
@@ -812,11 +846,11 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                   </div>
 
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">Advanced Use Cases</h4>
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <h4 className="font-semibold text-gray-900 mb-3 text-base">Advanced Use Cases</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="bg-gray-50 p-4 rounded-lg">
-                        <h5 className="font-medium text-gray-900 mb-2">Marketing Campaigns</h5>
-                        <ul className="text-sm text-gray-700 space-y-1">
+                        <h5 className="font-medium text-gray-900 mb-2 text-sm">Marketing Campaigns</h5>
+                        <ul className="text-xs text-gray-700 space-y-1">
                           <li>• Event check-ins and registration</li>
                           <li>• Product information and reviews</li>
                           <li>• Social media engagement</li>
@@ -826,8 +860,8 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                       </div>
                       
                       <div className="bg-gray-50 p-4 rounded-lg">
-                        <h5 className="font-medium text-gray-900 mb-2">Business Applications</h5>
-                        <ul className="text-sm text-gray-700 space-y-1">
+                        <h5 className="font-medium text-gray-900 mb-2 text-sm">Business Applications</h5>
+                        <ul className="text-xs text-gray-700 space-y-1">
                           <li>• Digital business cards (vCard)</li>
                           <li>• Invoice and payment processing</li>
                           <li>• Inventory and asset tracking</li>
@@ -837,8 +871,8 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                       </div>
                       
                       <div className="bg-gray-50 p-4 rounded-lg">
-                        <h5 className="font-medium text-gray-900 mb-2">Educational Uses</h5>
-                        <ul className="text-sm text-gray-700 space-y-1">
+                        <h5 className="font-medium text-gray-900 mb-2 text-sm">Educational Uses</h5>
+                        <ul className="text-xs text-gray-700 space-y-1">
                           <li>• Assignment submissions</li>
                           <li>• Resource sharing</li>
                           <li>• Interactive learning materials</li>
@@ -848,8 +882,8 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                       </div>
                       
                       <div className="bg-gray-50 p-4 rounded-lg">
-                        <h5 className="font-medium text-gray-900 mb-2">Personal Projects</h5>
-                        <ul className="text-sm text-gray-700 space-y-1">
+                        <h5 className="font-medium text-gray-900 mb-2 text-sm">Personal Projects</h5>
+                        <ul className="text-xs text-gray-700 space-y-1">
                           <li>• Wedding and event planning</li>
                           <li>• Home automation control</li>
                           <li>• Recipe and instruction sharing</li>
@@ -861,7 +895,7 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                   </div>
 
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">Performance Optimization</h4>
+                    <h4 className="font-semibold text-gray-900 mb-3 text-base">Performance Optimization</h4>
                     <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
                       <ul className="text-sm space-y-2 text-yellow-900">
                         <li>• <strong>Content Optimization:</strong> Keep URLs short and data concise</li>
@@ -877,16 +911,17 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
 
                 <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-lg mt-8">
                   <div className="flex items-start gap-4">
-                    <span className="text-3xl">🎓</span>
-                    <div>
+                    <span className="text-3xl flex-shrink-0">🎓</span>
+                    <div className="min-w-0">
                       <h4 className="font-bold text-xl mb-2">Congratulations!</h4>
-                      <p className="text-blue-100 mb-4">
+                      <p className="text-blue-100 mb-4 text-base">
                         You now have all the knowledge needed to create professional, effective QR codes. 
                         Remember to always test your codes before deployment and consider your users' experience.
                       </p>
-                      <div className="flex gap-3">
+                      <div className="flex flex-col sm:flex-row gap-3">
                         <Button
                           variant="secondary"
+                          className="text-sm px-4 py-2"
                           onClick={() => {
                             onClose();
                             setTimeout(() => {
@@ -906,41 +941,43 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
               
             </div>
           </div>
+        </div>
 
-          {/* Footer */}
-          <div className="border-t border-gray-200 p-6 bg-gray-50">
-            <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
-              <div className="text-sm text-gray-600">
-                <p>Need more help? Check our FAQ or contact support.</p>
-              </div>
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    onClose();
-                    setTimeout(() => {
-                      document.getElementById('features')?.scrollIntoView({ 
-                        behavior: 'smooth' 
-                      });
-                    }, 100);
-                  }}
-                >
-                  View Features
-                </Button>
-                <Button
-                  variant="primary"
-                  onClick={() => {
-                    onClose();
-                    setTimeout(() => {
-                      document.getElementById('qr-generator')?.scrollIntoView({ 
-                        behavior: 'smooth' 
-                      });
-                    }, 100);
-                  }}
-                >
-                  Start Creating
-                </Button>
-              </div>
+        {/* Footer */}
+        <div className="border-t border-gray-200 p-4 md:p-6 bg-gray-50 flex-shrink-0">
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
+            <div className="text-sm text-gray-600 text-center sm:text-left">
+              <p>Need more help? Check our FAQ or contact support.</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                className="text-sm px-3 py-2"
+                onClick={() => {
+                  onClose();
+                  setTimeout(() => {
+                    document.getElementById('features')?.scrollIntoView({ 
+                      behavior: 'smooth' 
+                    });
+                  }, 100);
+                }}
+              >
+                View Features
+              </Button>
+              <Button
+                variant="primary"
+                className="text-sm px-3 py-2"
+                onClick={() => {
+                  onClose();
+                  setTimeout(() => {
+                    document.getElementById('qr-generator')?.scrollIntoView({ 
+                      behavior: 'smooth' 
+                    });
+                  }, 100);
+                }}
+              >
+                Start Creating
+              </Button>
             </div>
           </div>
         </div>

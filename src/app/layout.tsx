@@ -55,20 +55,22 @@ export const metadata: Metadata = {
     title: 'QR Generator - Create Professional QR Codes Online',
     description: 'Generate high-quality QR codes instantly. Support for URLs, text, emails, and more with custom colors and multiple export formats.',
     siteName: 'QR Generator',
-    images: [
-      {
-        url: '/images/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'QR Generator - Professional QR Code Creation Tool',
-      },
-    ],
+    // Remove problematic image reference
+    // images: [
+    //   {
+    //     url: '/images/og-image.png',
+    //     width: 1200,
+    //     height: 630,
+    //     alt: 'QR Generator - Professional QR Code Creation Tool',
+    //   },
+    // ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'QR Generator - Create Professional QR Codes Online',
     description: 'Generate high-quality QR codes instantly. Support for URLs, text, emails, and more with custom colors and multiple export formats.',
-    images: ['/images/twitter-image.png'],
+    // Remove problematic image reference
+    // images: ['/images/twitter-image.png'],
     creator: '@qrgenerator',
   },
   robots: {
@@ -114,21 +116,20 @@ export default function RootLayout({ children }: RootLayoutProps) {
       suppressHydrationWarning
     >
       <head>
-        {/* Preload critical resources */}
-        <link
+        {/* Remove problematic preload that's causing 404 */}
+        {/* <link
           rel="preload"
           href="/images/hero-bg.webp"
           as="image"
           type="image/webp"
-        />
+        /> */}
         
         {/* DNS prefetch for external resources */}
         <link rel="dns-prefetch" href="//fonts.googleapis.com" />
         
-        {/* Favicon and app icons */}
+        {/* Favicon and app icons matching your manifest */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/site.webmanifest" />
         
         {/* Performance optimizations */}
@@ -149,7 +150,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
               name: 'QR Generator',
               description: 'Professional QR code generation service',
               url: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000',
-              logo: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/images/logo.png`,
+              // Remove problematic logo reference
+              // logo: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/images/logo.png`,
               sameAs: [
                 'https://github.com/Ikrar06/qr-generator-web',
               ],
@@ -235,34 +237,12 @@ export default function RootLayout({ children }: RootLayoutProps) {
         {/* Vercel Analytics - Only loads in production */}
         <Analytics />
 
-        {/* Service Worker Registration */}
-        {process.env.NODE_ENV === 'production' && (
-          <script
-            dangerouslySetInnerHTML={{
-              __html: `
-                if ('serviceWorker' in navigator) {
-                  window.addEventListener('load', function() {
-                    navigator.serviceWorker.register('/sw.js')
-                      .then(function(registration) {
-                        console.log('SW registered: ', registration);
-                      })
-                      .catch(function(registrationError) {
-                        console.log('SW registration failed: ', registrationError);
-                      });
-                  });
-                }
-              `,
-            }}
-          />
-        )}
-
-        {/* Enhanced QRApp utilities script */}
+        {/* Simplified QRApp utilities script - remove problematic service worker */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              // Enhanced QRApp utilities for better compatibility
+              // QRApp utilities for development
               window.QRApp = {
-                // Show/hide global loading
                 showLoading: function(message = 'Processing...') {
                   const loading = document.getElementById('global-loading');
                   if (loading) {
@@ -283,13 +263,11 @@ export default function RootLayout({ children }: RootLayoutProps) {
                   }
                 },
                 
-                // Progress bar utilities
                 setProgress: function(percent) {
                   const bar = document.querySelector('#progress-bar div');
                   if (bar) bar.style.width = Math.min(100, Math.max(0, percent)) + '%';
                 },
                 
-                // Enhanced toast notifications with better styling and error handling
                 showToast: function(message, type = 'info') {
                   try {
                     const container = document.getElementById('toast-container');
@@ -305,20 +283,17 @@ export default function RootLayout({ children }: RootLayoutProps) {
                     
                     toast.className = 'pointer-events-auto px-4 py-3 rounded-lg shadow-lg border text-sm font-medium max-w-sm transform transition-all duration-300 ease-out translate-x-full opacity-0 ' + (typeClasses[type] || typeClasses.info);
                     
-                    // Create message element with proper escaping
                     const messageEl = document.createElement('p');
                     messageEl.textContent = message;
                     toast.appendChild(messageEl);
                     
                     container.appendChild(toast);
                     
-                    // Animate in
                     requestAnimationFrame(() => {
                       toast.style.transform = 'translateX(0)';
                       toast.style.opacity = '1';
                     });
                     
-                    // Remove after 5 seconds with animation
                     setTimeout(() => {
                       toast.style.transform = 'translateX(100%)';
                       toast.style.opacity = '0';
@@ -333,9 +308,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
                   }
                 },
                 
-                // Performance monitoring
                 markStart: function(name) {
-                  if (window.performance && performance.mark) {
+                  if (window.performance?.mark) {
                     try {
                       performance.mark(name + '-start');
                     } catch (e) {
@@ -345,7 +319,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
                 },
                 
                 markEnd: function(name) {
-                  if (window.performance && performance.mark && performance.measure) {
+                  if (window.performance?.mark && performance.measure) {
                     try {
                       performance.mark(name + '-end');
                       performance.measure(name, name + '-start', name + '-end');
@@ -355,21 +329,12 @@ export default function RootLayout({ children }: RootLayoutProps) {
                   }
                 },
                 
-                // Analytics tracking with Vercel Analytics integration
                 analytics: {
                   track: function(event, properties) {
                     try {
-                      // Vercel Analytics tracking
                       if (typeof window !== 'undefined' && window.va) {
                         window.va('track', event, properties);
                       }
-                      
-                      // Google Analytics 4 tracking (if configured)
-                      if (typeof gtag !== 'undefined') {
-                        gtag('event', event, properties);
-                      }
-                      
-                      // Custom analytics logic
                       console.log('Analytics Event:', event, properties);
                     } catch (error) {
                       console.error('Analytics tracking error:', error);
@@ -377,7 +342,6 @@ export default function RootLayout({ children }: RootLayoutProps) {
                   }
                 },
 
-                // Error reporting utility
                 reportError: function(error, context = {}) {
                   try {
                     const errorData = {
@@ -389,39 +353,13 @@ export default function RootLayout({ children }: RootLayoutProps) {
                       context
                     };
                     
-                    // Send to analytics
                     this.analytics.track('error_occurred', errorData);
-                    
-                    // Log to console in development
-                    if (typeof process !== 'undefined' && process?.env?.NODE_ENV === 'development') {
-                      console.error('QRApp Error:', errorData);
-                    }
+                    console.error('QRApp Error:', errorData);
                   } catch (reportingError) {
                     console.error('Error reporting failed:', reportingError);
                   }
                 }
               };
-
-              // Global error handler
-              window.addEventListener('error', function(e) {
-                if (window.QRApp?.reportError) {
-                  window.QRApp.reportError(e.error || e, {
-                    type: 'global_error',
-                    filename: e.filename,
-                    lineno: e.lineno,
-                    colno: e.colno
-                  });
-                }
-              });
-
-              // Unhandled promise rejection handler
-              window.addEventListener('unhandledrejection', function(e) {
-                if (window.QRApp?.reportError) {
-                  window.QRApp.reportError(e.reason, {
-                    type: 'unhandled_rejection'
-                  });
-                }
-              });
             `,
           }}
         />
