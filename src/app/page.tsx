@@ -490,7 +490,7 @@ export default function HomePage() {
                 {(qrForm.formData.mode === QRMode.COLORED || 
                   qrForm.formData.mode === QRMode.HIGH_QUALITY ||
                   qrForm.formData.mode === QRMode.SVG ||
-                  qrForm.formData.mode === QRMode.BASIC) && ( // Added BASIC mode
+                  qrForm.formData.mode === QRMode.BASIC) && (
                   <Card>
                     <CardHeader>
                       <CardTitle>Step 3: Customize Colors</CardTitle>
@@ -500,6 +500,7 @@ export default function HomePage() {
                         foregroundColor={qrForm.formData.options?.color?.dark || '#000000'}
                         backgroundColor={qrForm.formData.options?.color?.light || '#ffffff'}
                         isTransparent={qrForm.formData.options?.transparent || false} 
+                        qrMode={qrForm.formData.mode} // ADD THIS LINE - Pass the current QR mode
                         onForegroundChange={(color) => {
                           qrForm.updateColor('dark', color);
                           analytics.trackInteraction('color_changed', {
