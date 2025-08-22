@@ -32,7 +32,7 @@ const nextConfig = {
   // Ensure proper routing
   trailingSlash: false,
   
-  // Add headers for better CORS handling
+  // Add headers for better CORS handling AND cache control
   async headers() {
     return [
       {
@@ -49,6 +49,34 @@ const nextConfig = {
           {
             key: 'Access-Control-Allow-Headers',
             value: 'Content-Type, Authorization',
+          },
+        ],
+      },
+      // Add cache control for all pages (fix cache issue)
+      {
+        source: '/((?!api|_next/static|_next/image|favicon.ico).*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache',
+          },
+          {
+            key: 'Expires',
+            value: '0',
+          },
+        ],
+      },
+      // Keep static assets cached but with shorter duration
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600, immutable',
           },
         ],
       },
