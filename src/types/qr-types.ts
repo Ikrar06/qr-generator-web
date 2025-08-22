@@ -76,6 +76,7 @@ export interface QROptions {
   rendererOpts?: {
     crisp?: boolean;
   };
+  transparent?: boolean;
 }
 
 // Default QR Options

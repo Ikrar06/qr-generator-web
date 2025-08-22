@@ -16,6 +16,7 @@ interface QRPreviewProps {
   onZoomChange?: (zoom: number) => void;
   showMetadata?: boolean;
   allowZoom?: boolean;
+  isTransparent?: boolean;
   className?: string;
 }
 
@@ -27,12 +28,14 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
   onZoomChange,
   showMetadata = true,
   allowZoom = true,
+  isTransparent = false,
   className
 }) => {
   const [zoom, setZoom] = useState(1);
   const [showFullMetadata, setShowFullMetadata] = useState(false);
   const [copied, setCopied] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [previewBackground, setPreviewBackground] = useState<'transparent' | 'white' | 'black' | 'checkered'>('checkered');
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -80,6 +83,31 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
     handleZoomChange(zoom - 0.25);
   };
 
+  // Get preview background style
+  const getPreviewBackgroundStyle = () => {
+    switch (previewBackground) {
+      case 'transparent':
+        return {};
+      case 'white':
+        return { backgroundColor: '#ffffff' };
+      case 'black':
+        return { backgroundColor: '#000000' };
+      case 'checkered':
+      default:
+        return {
+          backgroundImage: `
+            linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+            linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+            linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+            linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)
+          `,
+          backgroundSize: '20px 20px',
+          backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
+          backgroundColor: '#ffffff'
+        };
+    }
+  };
+
   // Format metadata for display
   const formatMetadata = (metadata: any) => {
     if (!metadata) return {};
@@ -98,49 +126,84 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>QR Code Preview</span>
-          {allowZoom && qrData && !loading && (
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={zoomOut}
-                disabled={zoom <= 0.25}
-                className="px-2"
-                title="Zoom out"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" />
-                </svg>
-              </Button>
-              <span className="text-xs text-gray-500 min-w-[3rem] text-center">
-                {Math.round(zoom * 100)}%
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={zoomIn}
-                disabled={zoom >= 4}
-                className="px-2"
-                title="Zoom in"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                </svg>
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={resetZoom}
-                disabled={zoom === 1}
-                className="px-2"
-                title="Reset zoom"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-              </Button>
-            </div>
-          )}
+          <div className="flex items-center gap-1">
+            {/* Background selector for transparent QR codes */}
+            {isTransparent && qrData && !loading && (
+              <div className="flex items-center gap-1 mr-3">
+                <Button
+                  variant={previewBackground === 'checkered' ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() => setPreviewBackground('checkered')}
+                  className="px-2"
+                  title="Checkered background"
+                >
+                  <div className="w-4 h-4 border border-gray-400 rounded-sm bg-checkered"></div>
+                </Button>
+                <Button
+                  variant={previewBackground === 'white' ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() => setPreviewBackground('white')}
+                  className="px-2"
+                  title="White background"
+                >
+                  <div className="w-4 h-4 bg-white border border-gray-400 rounded-sm"></div>
+                </Button>
+                <Button
+                  variant={previewBackground === 'black' ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() => setPreviewBackground('black')}
+                  className="px-2"
+                  title="Black background"
+                >
+                  <div className="w-4 h-4 bg-black border border-gray-400 rounded-sm"></div>
+                </Button>
+              </div>
+            )}
+            
+            {allowZoom && qrData && !loading && (
+              <>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={zoomOut}
+                  disabled={zoom <= 0.25}
+                  className="px-2"
+                  title="Zoom out"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" />
+                  </svg>
+                </Button>
+                <span className="text-xs text-gray-500 min-w-[3rem] text-center">
+                  {Math.round(zoom * 100)}%
+                </span>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={zoomIn}
+                  disabled={zoom >= 4}
+                  className="px-2"
+                  title="Zoom in"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                  </svg>
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={resetZoom}
+                  disabled={zoom === 1}
+                  className="px-2"
+                  title="Reset zoom"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </Button>
+              </>
+            )}
+          </div>
         </CardTitle>
         <CardDescription>
           {loading 
@@ -148,7 +211,9 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
             : error 
             ? 'There was an error generating the QR code'
             : qrData 
-            ? 'Your QR code is ready for download'
+            ? isTransparent 
+              ? 'Your transparent QR code is ready for download'
+              : 'Your QR code is ready for download'
             : 'QR code will appear here after generation'
           }
         </CardDescription>
@@ -157,7 +222,10 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
       <CardContent>
         <div className="space-y-4">
           {/* QR Code Display Area */}
-          <div className="flex items-center justify-center p-8 bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg min-h-[300px]">
+          <div 
+            className="flex items-center justify-center p-8 border-2 border-dashed border-gray-200 rounded-lg min-h-[300px]"
+            style={isTransparent && qrData ? getPreviewBackgroundStyle() : { backgroundColor: '#f9fafb' }}
+          >
             {loading ? (
               <div className="text-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -194,7 +262,10 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
                         alt="Generated QR Code"
                         onError={handleImageError}
                         onLoad={handleImageLoad}
-                        className="max-w-full max-h-full border border-gray-300 rounded"
+                        className={cn(
+                          "max-w-full max-h-full rounded",
+                          isTransparent ? "" : "border border-gray-300"
+                        )}
                         style={{
                           // Maintain aspect ratio and prevent stretching
                           width: 'auto',
@@ -223,6 +294,16 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
               </div>
             )}
           </div>
+
+          {/* Preview Background Info for Transparent QR */}
+          {isTransparent && qrData && !loading && !error && (
+            <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Preview background for demonstration only. Actual QR code has transparent background.</span>
+            </div>
+          )}
 
           {/* QR Code Actions */}
           {qrData && !loading && !error && (
@@ -308,9 +389,9 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
                 </div>
                 <div className="bg-gray-50 rounded-lg p-3">
                   <div className="text-sm font-medium text-gray-900">
-                    {qrData.metadata?.version || 'Auto'}
+                    {isTransparent ? 'Transparent' : 'Opaque'}
                   </div>
-                  <div className="text-xs text-gray-500">QR Version</div>
+                  <div className="text-xs text-gray-500">Background</div>
                 </div>
               </div>
 
@@ -347,6 +428,12 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
                             <span className="text-xs font-mono text-gray-900">{value}</span>
                           </div>
                         ))}
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-gray-600">Background:</span>
+                          <span className="text-xs font-mono text-gray-900">
+                            {isTransparent ? 'Transparent' : 'Solid Color'}
+                          </span>
+                        </div>
                       </div>
 
                       {qrData.metadata.segments && qrData.metadata.segments.length > 0 && (
@@ -384,12 +471,25 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                   </svg>
                   <div>
-                    <h4 className="text-sm font-medium text-blue-800">Scanning Tips</h4>
+                    <h4 className="text-sm font-medium text-blue-800">
+                      {isTransparent ? 'Transparent QR Code Tips' : 'Scanning Tips'}
+                    </h4>
                     <ul className="text-sm text-blue-700 mt-1 space-y-1">
-                      <li>• Print at least 2×2 cm (0.8×0.8 inch) for mobile scanning</li>
-                      <li>• Ensure good lighting when scanning</li>
-                      <li>• Keep the QR code flat and avoid reflections</li>
-                      <li>• Test scanning from different distances and angles</li>
+                      {isTransparent ? (
+                        <>
+                          <li>• Use PNG or SVG format to preserve transparency</li>
+                          <li>• Ensure good contrast between foreground color and background surface</li>
+                          <li>• Test on different colored backgrounds before final use</li>
+                          <li>• Avoid using transparent QR codes on busy or patterned backgrounds</li>
+                        </>
+                      ) : (
+                        <>
+                          <li>• Print at least 2×2 cm (0.8×0.8 inch) for mobile scanning</li>
+                          <li>• Ensure good lighting when scanning</li>
+                          <li>• Keep the QR code flat and avoid reflections</li>
+                          <li>• Test scanning from different distances and angles</li>
+                        </>
+                      )}
                     </ul>
                   </div>
                 </div>
@@ -398,6 +498,20 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
           )}
         </div>
       </CardContent>
+
+      <style jsx>{`
+        .bg-checkered {
+          background-image: 
+            linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+            linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+            linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+            linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+          background-size: 8px 8px;
+          background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
+        }
+      `}</style>
     </Card>
   );
 };
+
+export default QRPreview;

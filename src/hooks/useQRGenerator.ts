@@ -549,6 +549,21 @@ export function useQRForm(initialData?: Partial<QRGenerationRequest>) {
     setIsDirty(true);
   }, []);
 
+  const updateTransparency = useCallback((isTransparent: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      options: {
+        ...prev.options,
+        transparent: isTransparent,
+        color: {
+          // Pastikan kedua properties selalu string, tidak pernah undefined
+          dark: prev.options?.color?.dark || '#000000',
+          light: isTransparent ? 'transparent' : (prev.options?.color?.light || '#ffffff')
+        }
+      }
+    }));
+  }, []);
+
   const validateForm = useCallback(() => {
     const validation = qrUtils.validateRequest(formData);
     const errors: Record<string, string> = {};
@@ -598,6 +613,7 @@ export function useQRForm(initialData?: Partial<QRGenerationRequest>) {
     updateField,
     updateOption,
     updateColor,
+    updateTransparency,
     validateForm,
     resetForm,
     isValid: Object.keys(formErrors).length === 0

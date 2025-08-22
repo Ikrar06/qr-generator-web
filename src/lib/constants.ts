@@ -250,14 +250,16 @@ export const DEFAULT_OPTIONS_BY_MODE: Record<QRMode, Partial<QROptions>> = {
     width: QR_LIMITS.DEFAULT_SIZE,
     height: QR_LIMITS.DEFAULT_SIZE,
     color: { dark: '#000000', light: '#ffffff' },
-    errorCorrectionLevel: getDefaultErrorCorrection()
+    errorCorrectionLevel: getDefaultErrorCorrection(),
+    transparent: false // ADD THIS
   },
   [QRMode.COLORED]: {
     ...defaultQROptions,
     width: QR_LIMITS.DEFAULT_SIZE,
     height: QR_LIMITS.DEFAULT_SIZE,
     color: { dark: '#1e40af', light: '#f0f9ff' },
-    errorCorrectionLevel: getDefaultErrorCorrection()
+    errorCorrectionLevel: getDefaultErrorCorrection(),
+    transparent: false // ADD THIS
   },
   [QRMode.SVG]: {
     ...defaultQROptions,
@@ -265,14 +267,16 @@ export const DEFAULT_OPTIONS_BY_MODE: Record<QRMode, Partial<QROptions>> = {
     height: QR_LIMITS.DEFAULT_SIZE,
     color: { dark: '#000000', light: '#ffffff' },
     errorCorrectionLevel: getDefaultErrorCorrection(),
-    type: 'image/png'
+    type: 'image/png',
+    transparent: false // ADD THIS
   },
   [QRMode.HIGH_QUALITY]: {
     ...defaultQROptions,
     width: 512,
     height: 512,
     color: { dark: '#000000', light: '#ffffff' },
-    errorCorrectionLevel: ErrorCorrectionLevel.HIGH
+    errorCorrectionLevel: ErrorCorrectionLevel.HIGH,
+    transparent: false // ADD THIS
   }
 };
 

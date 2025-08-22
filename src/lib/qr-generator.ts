@@ -489,7 +489,7 @@ export class QRGenerator {
   private mergeOptions(mode: QRMode, userOptions: Partial<QROptions> = {}): QROptions {
     const modeDefaults = DEFAULT_OPTIONS_BY_MODE[mode] || {};
     
-    return {
+    const merged = {
       ...this.defaultOptions,
       ...modeDefaults,
       ...userOptions,
@@ -500,6 +500,13 @@ export class QRGenerator {
         ...userOptions.color
       }
     };
+
+    // Handle transparency
+    if (merged.transparent && merged.color) {
+      merged.color.light = 'transparent';
+    }
+
+    return merged;
   }
 
   /**

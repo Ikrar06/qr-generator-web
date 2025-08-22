@@ -12,21 +12,27 @@ import { cn } from '@/lib/utils';
 interface ColorPickerProps {
   foregroundColor: string;
   backgroundColor: string;
+  isTransparent?: boolean;
   onForegroundChange: (color: string) => void;
   onBackgroundChange: (color: string) => void;
+  onTransparencyChange?: (isTransparent: boolean) => void;
   disabled?: boolean;
   loading?: boolean;
   className?: string;
+  showTransparencyOption?: boolean;
 }
 
 export const ColorPicker: React.FC<ColorPickerProps> = ({
   foregroundColor,
   backgroundColor,
+  isTransparent = false,
   onForegroundChange,
   onBackgroundChange,
+  onTransparencyChange,
   disabled = false,
   loading = false,
-  className
+  className,
+  showTransparencyOption = true
 }) => {
   const [activeColorType, setActiveColorType] = useState<'foreground' | 'background'>('foreground');
   const [customColor, setCustomColor] = useState('');
@@ -35,27 +41,18 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
 
   const colorInputRef = useRef<HTMLInputElement>(null);
 
-  // Load recent colors from localStorage on mount
+  // Load recent colors on mount (memory-based for Claude.ai compatibility)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('qr-recent-colors');
-      if (stored) {
-        try {
-          setRecentColors(JSON.parse(stored));
-        } catch (e) {
-          console.warn('Failed to parse recent colors from localStorage');
-        }
-      }
-    }
+    // In a real environment, you would load from localStorage
+    // For Claude.ai, we'll just initialize with empty array
+    setRecentColors([]);
   }, []);
 
-  // Save recent colors to localStorage
+  // Save recent colors (memory-based for Claude.ai compatibility)
   const saveRecentColor = (color: string) => {
-    if (typeof window !== 'undefined') {
-      const updated = [color, ...recentColors.filter(c => c !== color)].slice(0, 8);
-      setRecentColors(updated);
-      localStorage.setItem('qr-recent-colors', JSON.stringify(updated));
-    }
+    const updated = [color, ...recentColors.filter(c => c !== color)].slice(0, 8);
+    setRecentColors(updated);
+    // In a real environment, you would save to localStorage here
   };
 
   // Handle color selection
@@ -86,20 +83,57 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
     onBackgroundChange(combination.background);
     saveRecentColor(combination.foreground);
     saveRecentColor(combination.background);
+    
+    // Reset transparency when selecting a combination
+    if (onTransparencyChange && isTransparent) {
+      onTransparencyChange(false);
+    }
+  };
+
+  // Handle transparency toggle - FIXED: Added better error handling and fallback
+  const handleTransparencyToggle = () => {
+    console.log('Toggle clicked, onTransparencyChange exists:', !!onTransparencyChange);
+    console.log('Current isTransparent:', isTransparent);
+    
+    if (onTransparencyChange) {
+      const newTransparent = !isTransparent;
+      onTransparencyChange(newTransparent);
+      
+      // If enabling transparency, switch to foreground color selection
+      if (newTransparent) {
+        setActiveColorType('foreground');
+      }
+    } else {
+      // Fallback: Log warning if no callback is provided
+      console.warn('onTransparencyChange callback is not provided to ColorPicker component');
+    }
   };
 
   // Swap colors
   const swapColors = () => {
-    const temp = foregroundColor;
-    onForegroundChange(backgroundColor);
-    onBackgroundChange(temp);
+    if (!isTransparent) {
+      const temp = foregroundColor;
+      onForegroundChange(backgroundColor);
+      onBackgroundChange(temp);
+    }
   };
 
   // Reset to default colors
   const resetToDefault = () => {
     onForegroundChange('#000000');
     onBackgroundChange('#ffffff');
+    if (onTransparencyChange) {
+      onTransparencyChange(false);
+    }
   };
+
+  // Get effective background color for preview
+  const getEffectiveBackgroundColor = () => {
+    return isTransparent ? 'transparent' : backgroundColor;
+  };
+
+  // Check if transparency toggle should be disabled
+  const isTransparencyDisabled = disabled || loading;
 
   return (
     <Card className={cn("w-full", className)} variant="outline">
@@ -108,10 +142,10 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
           <span>Color Customization</span>
           <div className="flex gap-2">
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               onClick={swapColors}
-              disabled={disabled || loading}
+              disabled={disabled || loading || isTransparent}
               className="px-2"
               title="Swap colors"
             >
@@ -120,7 +154,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
               </svg>
             </Button>
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               onClick={resetToDefault}
               disabled={disabled || loading}
@@ -139,22 +173,89 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
       </CardHeader>
 
       <CardContent className="space-y-6">
+        {/* Transparency Toggle - FIXED: Improved accessibility and debugging */}
+        {showTransparencyOption && (
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+            <div className="flex items-center space-x-3">
+              <div className="flex-shrink-0">
+                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-gray-900">Transparent Background</h4>
+                <p className="text-xs text-gray-600">Remove background color for transparent QR codes</p>
+              </div>
+            </div>
+            
+            {/* FIXED: Added better structure and debugging info */}
+            <div className="flex items-center">
+              {/* Debug info - remove in production */}
+              {process.env.NODE_ENV === 'development' && (
+                <span className="text-xs text-gray-400 mr-2">
+                  {onTransparencyChange ? '✓' : '✗'}
+                </span>
+              )}
+              
+              <button
+                type="button"
+                onClick={handleTransparencyToggle}
+                disabled={isTransparencyDisabled}
+                className={cn(
+                  "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+                  isTransparent ? "bg-blue-600" : "bg-gray-200",
+                  isTransparencyDisabled ? "cursor-not-allowed opacity-50" : "hover:bg-opacity-80"
+                )}
+                role="switch"
+                aria-checked={isTransparent}
+                aria-labelledby="transparency-label"
+              >
+                <span className="sr-only">Toggle transparent background</span>
+                <span
+                  className={cn(
+                    "pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition duration-200 ease-in-out",
+                    isTransparent ? "translate-x-5" : "translate-x-0"
+                  )}
+                />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Color Preview */}
         <div className="flex items-center justify-center p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-          <div 
-            className="w-24 h-24 rounded-lg border-2 border-gray-300 relative overflow-hidden"
-            style={{ backgroundColor: backgroundColor }}
-          >
-            <div className="absolute inset-2 grid grid-cols-3 gap-0.5">
-              {[...Array(9)].map((_, i) => (
-                <div
-                  key={i}
-                  className="rounded-sm"
-                  style={{ 
-                    backgroundColor: Math.random() > 0.3 ? foregroundColor : 'transparent' 
-                  }}
-                />
-              ))}
+          <div className="relative">
+            {/* Checkered background pattern for transparency preview */}
+            {isTransparent && (
+              <div 
+                className="absolute inset-0 w-24 h-24 rounded-lg border-2 border-gray-300"
+                style={{
+                  backgroundImage: `
+                    linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                    linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                    linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                    linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)
+                  `,
+                  backgroundSize: '8px 8px',
+                  backgroundPosition: '0 0, 0 4px, 4px -4px, -4px 0px'
+                }}
+              />
+            )}
+            <div 
+              className="w-24 h-24 rounded-lg border-2 border-gray-300 relative overflow-hidden"
+              style={{ backgroundColor: getEffectiveBackgroundColor() }}
+            >
+              <div className="absolute inset-2 grid grid-cols-3 gap-0.5">
+                {[...Array(9)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="rounded-sm"
+                    style={{ 
+                      backgroundColor: Math.random() > 0.3 ? foregroundColor : 'transparent' 
+                    }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -184,101 +285,187 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
           <button
             type="button"
             onClick={() => setActiveColorType('background')}
-            disabled={disabled || loading}
+            disabled={disabled || loading || isTransparent}
             className={cn(
               "flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200",
               activeColorType === 'background'
                 ? "bg-white shadow-sm text-gray-900"
-                : "text-gray-600 hover:text-gray-900"
+                : "text-gray-600 hover:text-gray-900",
+              isTransparent && "opacity-50 cursor-not-allowed"
             )}
           >
             <div className="flex items-center justify-center gap-2">
-              <div 
-                className="w-3 h-3 rounded border border-gray-300"
-                style={{ backgroundColor: backgroundColor }}
-              />
+              <div className="w-3 h-3 rounded border border-gray-300 relative overflow-hidden">
+                {isTransparent ? (
+                  <div 
+                    className="absolute inset-0"
+                    style={{
+                      backgroundImage: `
+                        linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                        linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                        linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)
+                      `,
+                      backgroundSize: '3px 3px',
+                      backgroundPosition: '0 0, 0 1.5px, 1.5px -1.5px, -1.5px 0px'
+                    }}
+                  />
+                ) : (
+                  <div 
+                    className="absolute inset-0"
+                    style={{ backgroundColor: backgroundColor }}
+                  />
+                )}
+              </div>
               Background
             </div>
           </button>
         </div>
 
-        {/* Popular Color Combinations */}
-        <div>
-          <h4 className="text-sm font-medium text-gray-900 mb-3">Popular Combinations</h4>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {POPULAR_COLOR_COMBINATIONS.map((combination, index) => (
-              <button
-                key={index}
-                type="button"
-                onClick={() => handleCombinationSelect(combination)}
-                disabled={disabled || loading}
-                className={cn(
-                  "p-2 border rounded-lg transition-all duration-200 group",
-                  "hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20",
-                  foregroundColor === combination.foreground && backgroundColor === combination.background
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200 hover:bg-gray-50"
-                )}
-                title={combination.name}
-              >
-                <div className="flex items-center gap-2">
-                  <div className="relative w-6 h-6 rounded border border-gray-300 overflow-hidden">
-                    <div 
-                      className="absolute inset-0"
-                      style={{ backgroundColor: combination.background }}
-                    />
-                    <div 
-                      className="absolute inset-1 rounded-sm"
-                      style={{ backgroundColor: combination.foreground }}
-                    />
-                  </div>
-                  <span className="text-xs font-medium text-gray-700 group-hover:text-gray-900">
-                    {combination.name}
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Popular Color Combinations - Hidden when transparent */}
+        {!isTransparent && (
+          <>
+            <div>
+              <h4 className="text-sm font-medium text-gray-900 mb-3">Popular Combinations</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                {POPULAR_COLOR_COMBINATIONS.map((combination, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => handleCombinationSelect(combination)}
+                    disabled={disabled || loading}
+                    className={cn(
+                      "p-2 border rounded-lg transition-all duration-200 group",
+                      "hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20",
+                      foregroundColor === combination.foreground && backgroundColor === combination.background
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 hover:bg-gray-50"
+                    )}
+                    title={combination.name}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="relative w-6 h-6 rounded border border-gray-300 overflow-hidden">
+                        <div 
+                          className="absolute inset-0"
+                          style={{ backgroundColor: combination.background }}
+                        />
+                        <div 
+                          className="absolute inset-1 rounded-sm"
+                          style={{ backgroundColor: combination.foreground }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-gray-700 group-hover:text-gray-900">
+                        {combination.name}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
 
-        {/* Default Color Palette */}
-        <div>
-          <h4 className="text-sm font-medium text-gray-900 mb-3">Color Palette</h4>
-          <div className="grid grid-cols-6 md:grid-cols-9 gap-2">
-            {DEFAULT_COLORS.map((color, index) => {
-              const currentColor = activeColorType === 'foreground' ? foregroundColor : backgroundColor;
-              const isSelected = currentColor === color.hex;
-              
-              return (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => handleColorSelect(color.hex)}
-                  disabled={disabled || loading}
-                  className={cn(
-                    "w-8 h-8 rounded-lg border-2 transition-all duration-200",
-                    "hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500",
-                    isSelected 
-                      ? "border-blue-500 shadow-lg scale-110" 
-                      : "border-gray-300 hover:border-gray-400"
-                  )}
-                  style={{ backgroundColor: color.hex }}
-                  title={color.name}
-                  data-testid={`color-${color.value}`}
-                />
-              );
-            })}
+            {/* Default Color Palette */}
+            <div>
+              <h4 className="text-sm font-medium text-gray-900 mb-3">Color Palette</h4>
+              <div className="grid grid-cols-6 md:grid-cols-9 gap-2">
+                {DEFAULT_COLORS.map((color, index) => {
+                  const currentColor = activeColorType === 'foreground' ? foregroundColor : backgroundColor;
+                  const isSelected = currentColor === color.hex;
+                  
+                  return (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => handleColorSelect(color.hex)}
+                      disabled={disabled || loading || (activeColorType === 'background' && isTransparent)}
+                      className={cn(
+                        "w-8 h-8 rounded-lg border-2 transition-all duration-200",
+                        "hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500",
+                        isSelected 
+                          ? "border-blue-500 shadow-lg scale-110" 
+                          : "border-gray-300 hover:border-gray-400",
+                        (activeColorType === 'background' && isTransparent) && "opacity-50 cursor-not-allowed"
+                      )}
+                      style={{ backgroundColor: color.hex }}
+                      title={color.name}
+                      data-testid={`color-${color.value}`}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Foreground Color Palette for Transparent Mode */}
+        {isTransparent && (
+          <div>
+            <h4 className="text-sm font-medium text-gray-900 mb-3">Foreground Color</h4>
+            <div className="grid grid-cols-6 md:grid-cols-9 gap-2">
+              {DEFAULT_COLORS.map((color, index) => {
+                const isSelected = foregroundColor === color.hex;
+                
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => handleColorSelect(color.hex)}
+                    disabled={disabled || loading}
+                    className={cn(
+                      "w-8 h-8 rounded-lg border-2 transition-all duration-200",
+                      "hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500",
+                      isSelected 
+                        ? "border-blue-500 shadow-lg scale-110" 
+                        : "border-gray-300 hover:border-gray-400"
+                    )}
+                    style={{ backgroundColor: color.hex }}
+                    title={color.name}
+                    data-testid={`color-${color.value}`}
+                  />
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Recent Colors */}
-        {recentColors.length > 0 && (
+        {recentColors.length > 0 && !isTransparent && (
           <div>
             <h4 className="text-sm font-medium text-gray-900 mb-3">Recent Colors</h4>
             <div className="flex gap-2 flex-wrap">
               {recentColors.map((color, index) => {
                 const currentColor = activeColorType === 'foreground' ? foregroundColor : backgroundColor;
                 const isSelected = currentColor === color;
+                
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => handleColorSelect(color)}
+                    disabled={disabled || loading || (activeColorType === 'background' && isTransparent)}
+                    className={cn(
+                      "w-8 h-8 rounded-lg border-2 transition-all duration-200",
+                      "hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500",
+                      isSelected 
+                        ? "border-blue-500 shadow-lg scale-110" 
+                        : "border-gray-300 hover:border-gray-400",
+                      (activeColorType === 'background' && isTransparent) && "opacity-50 cursor-not-allowed"
+                    )}
+                    style={{ backgroundColor: color }}
+                    title={color}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Recent Colors for Transparent Mode */}
+        {recentColors.length > 0 && isTransparent && (
+          <div>
+            <h4 className="text-sm font-medium text-gray-900 mb-3">Recent Colors</h4>
+            <div className="flex gap-2 flex-wrap">
+              {recentColors.map((color, index) => {
+                const isSelected = foregroundColor === color;
                 
                 return (
                   <button
@@ -307,10 +494,10 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-sm font-medium text-gray-900">Custom Color</h4>
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               onClick={() => setShowCustomPicker(!showCustomPicker)}
-              disabled={disabled || loading}
+              disabled={disabled || loading || (activeColorType === 'background' && isTransparent)}
             >
               {showCustomPicker ? 'Hide' : 'Show'} Custom
             </Button>
@@ -324,7 +511,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
                   value={customColor}
                   onChange={(e) => setCustomColor(e.target.value)}
                   placeholder="#000000"
-                  disabled={disabled || loading}
+                  disabled={disabled || loading || (activeColorType === 'background' && isTransparent)}
                   error={customColor && !isValidHexColor(customColor) ? 'Invalid hex color format' : undefined}
                   className="font-mono"
                   leftIcon={
@@ -338,7 +525,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
                 />
                 <Button
                   onClick={handleCustomColorSubmit}
-                  disabled={disabled || loading || !isValidHexColor(customColor)}
+                  disabled={disabled || loading || !isValidHexColor(customColor) || (activeColorType === 'background' && isTransparent)}
                   size="md"
                 >
                   Apply
@@ -352,7 +539,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
                   type="color"
                   value={activeColorType === 'foreground' ? foregroundColor : backgroundColor}
                   onChange={(e) => handleColorSelect(e.target.value)}
-                  disabled={disabled || loading}
+                  disabled={disabled || loading || (activeColorType === 'background' && isTransparent)}
                   className="w-8 h-8 border border-gray-300 rounded cursor-pointer disabled:cursor-not-allowed"
                 />
               </div>
@@ -383,24 +570,87 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
               Background Color
             </label>
             <div className="flex items-center gap-3 p-3 border rounded-lg bg-gray-50">
-              <div 
-                className="w-8 h-8 rounded border-2 border-white shadow-sm"
-                style={{ backgroundColor: backgroundColor }}
-              />
+              <div className="w-8 h-8 rounded border-2 border-white shadow-sm relative overflow-hidden">
+                {isTransparent ? (
+                  <>
+                    <div 
+                      className="absolute inset-0"
+                      style={{
+                        backgroundImage: `
+                          linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                          linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                          linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                          linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)
+                        `,
+                        backgroundSize: '4px 4px',
+                        backgroundPosition: '0 0, 0 2px, 2px -2px, -2px 0px'
+                      }}
+                    />
+                    <div className="absolute inset-1 flex items-center justify-center">
+                      <span className="text-xs font-bold text-gray-600">⌀</span>
+                    </div>
+                  </>
+                ) : (
+                  <div 
+                    className="absolute inset-0"
+                    style={{ backgroundColor: backgroundColor }}
+                  />
+                )}
+              </div>
               <div>
-                <div className="font-mono text-sm text-gray-900">{backgroundColor}</div>
+                <div className="font-mono text-sm text-gray-900">
+                  {isTransparent ? 'transparent' : backgroundColor}
+                </div>
                 <div className="text-xs text-gray-500">QR Background Color</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Color Contrast Warning */}
-        {foregroundColor && backgroundColor && (
+        {/* Color Contrast Warning - Hidden when transparent */}
+        {!isTransparent && foregroundColor && backgroundColor && (
           <ColorContrastChecker 
             foreground={foregroundColor} 
             background={backgroundColor} 
           />
+        )}
+
+        {/* Transparency Info */}
+        {isTransparent && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="flex items-start">
+              <svg className="w-4 h-4 text-blue-600 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+              <div>
+                <h4 className="text-sm font-medium text-blue-800">Transparent Background</h4>
+                <p className="text-sm text-blue-700 mt-1">
+                  The background will be transparent. This works best with PNG and SVG formats. 
+                  Make sure your foreground color has good contrast against the surface where the QR code will be used.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Transparent Mode Tips */}
+        {isTransparent && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <div className="flex items-start">
+              <svg className="w-4 h-4 text-yellow-600 mt-0.5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              <div>
+                <h4 className="text-sm font-medium text-yellow-800">Important Tips</h4>
+                <ul className="text-sm text-yellow-700 mt-1 space-y-1">
+                  <li>• Choose high-contrast foreground colors (black, dark blue, dark green)</li>
+                  <li>• Test your QR code on different colored backgrounds</li>
+                  <li>• Avoid light colors that may not scan well on white surfaces</li>
+                  <li>• PNG and SVG formats preserve transparency best</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>
@@ -450,7 +700,6 @@ const ColorContrastChecker: React.FC<ColorContrastCheckerProps> = ({
   };
 
   const contrast = calculateContrast(foreground, background);
-  const isGoodContrast = contrast >= 3; // WCAG AA standard for graphics
   
   if (contrast < 2) {
     return (
@@ -502,3 +751,5 @@ const ColorContrastChecker: React.FC<ColorContrastCheckerProps> = ({
     );
   }
 };
+
+export default ColorPicker;

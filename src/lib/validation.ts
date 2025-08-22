@@ -244,6 +244,12 @@ export const qrOptionsSchema = new SimpleValidator<Partial<QROptions>>((data) =>
         return opts;
       });
     }
+    if (obj.transparent !== undefined) {
+      if (typeof obj.transparent !== 'boolean') {
+        throw new Error('transparent must be a boolean');
+      }
+      options.transparent = obj.transparent;
+    }
     
     return options;
   });
