@@ -634,24 +634,40 @@ export default function HomePage() {
                       ) : (
                         <DownloadButton
                           qrData={qrGenerator.state.currentQR}
+                          qrMode={qrForm.formData.mode} // Pass the current QR mode
                           loading={qrGenerator.isDownloading}
                           disabled={false}
                           onDownloadStart={() => {
                             console.log('Download started');
                             analytics.trackInteraction('download_started');
+                            // Optional: Set downloading state in generator
+                            // qrGenerator.setDownloading(true);
                           }}
                           onDownloadComplete={(filename) => {
                             console.log('Download completed:', filename);
+                            analytics.trackQRDownload(
+                              qrGenerator.state.currentQR!,
+                              filename.split('.').pop()?.toUpperCase() as any // Extract format from filename
+                            );
                             if (typeof window !== 'undefined' && window.QRApp?.showToast) {
                               window.QRApp.showToast(`Downloaded: ${filename}`, 'success');
                             }
+                            // Optional: Clear downloading state
+                            // qrGenerator.setDownloading(false);
                           }}
                           onDownloadError={(error) => {
                             console.error('Download error:', error);
+                            analytics.trackError(new Error(error), {
+                              context: 'qr_download',
+                              qrData: qrGenerator.state.currentQR
+                            });
                             if (typeof window !== 'undefined' && window.QRApp?.showToast) {
                               window.QRApp.showToast(`Download failed: ${error}`, 'error');
                             }
+                            // Optional: Clear downloading state
+                            // qrGenerator.setDownloading(false);
                           }}
+                          className="w-full"
                         />
                       )}
                     </CardContent>
