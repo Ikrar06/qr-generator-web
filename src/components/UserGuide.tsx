@@ -298,7 +298,7 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                     icon: '🔗',
                     title: 'Website URL',
                     description: 'Direct users to websites. Supports HTTP and HTTPS protocols.',
-                    highlight: true
+                    
                   },
                   {
                     icon: '📝',
@@ -392,7 +392,7 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="pt-0">
-                      <ul className="text-sm space-y-2 text-blue-800">
+                      <ul className="text-sm space-y-2">
                         <li>✓ Custom colors</li>
                         <li>✓ Brand matching</li>
                         <li>✓ Visual appeal</li>
@@ -420,15 +420,15 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                     </CardContent>
                   </Card>
 
-                  <Card className="border-2 border-green-200 bg-green-50">
+                  <Card className="border-2">
                     <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-green-900 text-base">
+                      <CardTitle className="flex items-center gap-2 text-base">
                         <span className="text-xl">🏆</span>
                         High Quality
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="pt-0">
-                      <ul className="text-sm space-y-2 text-green-800">
+                      <ul className="text-sm space-y-2">
                         <li>✓ Maximum error correction</li>
                         <li>✓ Damage resistance</li>
                         <li>✓ Professional quality</li>
@@ -502,16 +502,16 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Card className="border-2 border-green-200 bg-green-50">
+                  <Card className="border-2">
                     <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-green-900 text-base">
+                      <CardTitle className="flex items-center gap-2 text-base">
                         <span className="text-xl">🖼️</span>
                         PNG Format
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="pt-0">
                       <div className="space-y-2 text-sm">
-                        <div className="text-green-800">
+                        <div className="text-gray-800">
                           <strong>Advantages:</strong>
                           <ul className="list-disc list-inside mt-1 space-y-1">
                             <li>Lossless compression</li>
@@ -520,23 +520,23 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                             <li>Universal compatibility</li>
                           </ul>
                         </div>
-                        <div className="text-green-700">
+                        <div className="text-gray-800">
                           <strong>Best for:</strong> Web use, presentations, documents
                         </div>
                       </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="border-2 border-blue-200 bg-blue-50">
+                  <Card className="border-2">
                     <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center gap-2 text-blue-900 text-base">
+                      <CardTitle className="flex items-center gap-2 text-base">
                         <span className="text-xl">📐</span>
                         SVG Format
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="pt-0">
                       <div className="space-y-2 text-sm">
-                        <div className="text-blue-800">
+                        <div className="text-gray-800">
                           <strong>Advantages:</strong>
                           <ul className="list-disc list-inside mt-1 space-y-1">
                             <li>Infinite scalability</li>
@@ -545,7 +545,7 @@ export default function UserGuide({ isOpen, onClose, startWithSection }: UserGui
                             <li>Perfect print quality</li>
                           </ul>
                         </div>
-                        <div className="text-blue-700">
+                        <div className="text-gray-800">
                           <strong>Best for:</strong> Print materials, logos, professional use
                         </div>
                       </div>
