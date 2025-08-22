@@ -550,19 +550,35 @@ export function useQRForm(initialData?: Partial<QRGenerationRequest>) {
   }, []);
 
   const updateTransparency = useCallback((isTransparent: boolean) => {
-    setFormData(prev => ({
+  console.log('=== DEBUG updateTransparency ===');
+  console.log('updateTransparency called with:', isTransparent);
+  console.log('Current formData.options:', formData.options);
+  console.log('Current transparency:', formData.options?.transparent);
+  
+  setFormData(prev => {
+    const newFormData = {
       ...prev,
       options: {
         ...prev.options,
         transparent: isTransparent,
+        // IMPORTANT: Keep original color values
         color: {
-          // Pastikan kedua properties selalu string, tidak pernah undefined
           dark: prev.options?.color?.dark || '#000000',
-          light: isTransparent ? 'transparent' : (prev.options?.color?.light || '#ffffff')
+          light: prev.options?.color?.light || '#ffffff' // Keep original color
         }
       }
-    }));
-  }, []);
+    };
+    
+    console.log('New form data:', newFormData);
+    return newFormData;
+  });
+  
+  setIsDirty(true);
+}, [formData.options]);
+
+// Also add debug to the return statement:
+console.log('Current formData in useQRForm:', formData);
+console.log('formData.options?.transparent:', formData.options?.transparent);
 
   const validateForm = useCallback(() => {
     const validation = qrUtils.validateRequest(formData);

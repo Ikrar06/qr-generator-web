@@ -94,6 +94,43 @@ export class QRGenerator {
   }
 
   /**
+   * Generate QR code using canvas for proper transparency support
+   */
+  private async generateQRCanvas(
+    data: string,
+    options: any
+  ): Promise<string> {
+    return new Promise((resolve, reject) => {
+      try {
+        // Use canvas rendering for better control over transparency
+        QRCode.toCanvas(data, options, (error: any, canvas: HTMLCanvasElement) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          try {
+            // Convert canvas to data URL
+            const dataUrl = canvas.toDataURL('image/png');
+            resolve(dataUrl);
+          } catch (canvasError) {
+            reject(canvasError);
+          }
+        });
+      } catch (syncError) {
+        // Fallback to toDataURL if canvas method fails
+        QRCode.toDataURL(data, options, (error: any, url: string) => {
+          if (error) {
+            reject(syncError);
+          } else {
+            resolve(url);
+          }
+        });
+      }
+    });
+  }
+
+  /**
    * Generate QR code data URL with proper error handling
    */
   private async generateQRDataURL(
@@ -117,6 +154,141 @@ export class QRGenerator {
   }
 
   /**
+   * Prepare color options for QR generation, handling transparency
+   */
+  private prepareColorOptions(options: QROptions): any {
+    // FIXED: Proper transparency handling
+    if (options.transparent) {
+      return {
+        dark: options.color?.dark || '#000000',
+        // For transparent background, don't set light color at all
+        // This lets the QR code library handle transparency properly
+      };
+    }
+
+    // Normal color handling
+    return {
+      dark: options.color?.dark || '#000000',
+      light: options.color?.light || '#ffffff'
+    };
+  }
+
+  /**
+   * Create transparent PNG using canvas manipulation
+   */
+  private async makeTransparentPNG(dataUrl: string, foregroundColor: string = '#000000'): Promise<string> {
+    return new Promise((resolve, reject) => {
+      try {
+        // Create image from data URL
+        const img = new Image();
+        img.onload = () => {
+          try {
+            // Create canvas
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            if (!ctx) {
+              resolve(dataUrl); // Fallback if no context
+              return;
+            }
+
+            canvas.width = img.width;
+            canvas.height = img.height;
+
+            // Draw image to canvas
+            ctx.drawImage(img, 0, 0);
+
+            // Get image data
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+
+            // Convert white pixels to transparent
+            for (let i = 0; i < data.length; i += 4) {
+              const r = data[i];
+              const g = data[i + 1];
+              const b = data[i + 2];
+              
+              // Check if pixel is white or very light (threshold for background)
+              if (r > 240 && g > 240 && b > 240) {
+                // Make pixel transparent
+                data[i + 3] = 0; // Set alpha to 0
+              }
+            }
+
+            // Put modified image data back
+            ctx.putImageData(imageData, 0, 0);
+
+            // Convert to data URL with PNG format (preserves transparency)
+            const transparentDataUrl = canvas.toDataURL('image/png');
+            resolve(transparentDataUrl);
+          } catch (processError) {
+            console.warn('Canvas processing failed, using original:', processError);
+            resolve(dataUrl); // Fallback to original
+          }
+        };
+
+        img.onerror = () => {
+          console.warn('Image loading failed, using original dataUrl');
+          resolve(dataUrl); // Fallback to original
+        };
+
+        img.src = dataUrl;
+      } catch (error) {
+        console.warn('Transparency processing failed:', error);
+        resolve(dataUrl); // Fallback to original
+      }
+    });
+  }
+
+  /**
+   * Generate QR with proper transparency support using canvas
+   */
+  private async generateTransparentQR(
+    data: string,
+    options: any,
+    foregroundColor: string
+  ): Promise<string> {
+    // Create a temporary canvas to generate QR with proper transparency
+    const canvas = document.createElement('canvas');
+    canvas.width = options.width || 256;
+    canvas.height = options.width || 256; // QR codes are square
+
+    return new Promise((resolve, reject) => {
+      QRCode.toCanvas(canvas, data, {
+        ...options,
+        color: {
+          dark: foregroundColor,
+          light: '#00000000' // Transparent background
+        }
+      }, (error: any) => {
+        if (error) {
+          // Fallback to manual transparency processing
+          QRCode.toDataURL(data, options, async (fallbackError: any, url: string) => {
+            if (fallbackError) {
+              reject(fallbackError);
+            } else {
+              try {
+                const transparentUrl = await this.makeTransparentPNG(url, foregroundColor);
+                resolve(transparentUrl);
+              } catch (processError) {
+                reject(processError);
+              }
+            }
+          });
+        } else {
+          // Success with canvas - convert to data URL
+          try {
+            const dataUrl = canvas.toDataURL('image/png');
+            resolve(dataUrl);
+          } catch (canvasError) {
+            reject(canvasError);
+          }
+        }
+      });
+    });
+  }
+
+  /**
    * Generate basic black and white QR code
    */
   private async generateBasic(
@@ -129,10 +301,9 @@ export class QRGenerator {
       const svgOptions = {
         errorCorrectionLevel: options.errorCorrectionLevel,
         margin: options.margin,
-        color: {
-          dark: '#000000',
-          light: '#ffffff'
-        },
+        color: options.transparent ? 
+          { dark: '#000000' } : 
+          { dark: '#000000', light: '#ffffff' },
         width: options.width
       };
 
@@ -141,11 +312,17 @@ export class QRGenerator {
         type: 'svg' as any
       });
 
-      const dataUrl = `data:image/svg+xml;base64,${Buffer.from(svgString).toString('base64')}`;
+      // Handle transparency in SVG by modifying the SVG string
+      let processedSVG = svgString;
+      if (options.transparent) {
+        processedSVG = this.makeTransparentSVG(svgString);
+      }
+
+      const dataUrl = `data:image/svg+xml;base64,${Buffer.from(processedSVG).toString('base64')}`;
 
       return {
         success: true,
-        data: svgString,
+        data: processedSVG,
         dataUrl,
         filename,
         format: OutputFormat.SVG,
@@ -156,14 +333,10 @@ export class QRGenerator {
         timestamp: Date.now()
       };
     } else {
-      // Generate raster image using callback-based toDataURL
+      // Generate raster image with proper transparency handling
       const baseOptions = {
         errorCorrectionLevel: options.errorCorrectionLevel,
         margin: options.margin,
-        color: {
-          dark: '#000000',
-          light: '#ffffff'
-        },
         width: options.width,
         rendererOpts: options.rendererOpts
       };
@@ -173,25 +346,60 @@ export class QRGenerator {
 
       // Use the safe callback-based method
       if (options.type === 'image/jpeg') {
+        // JPEG doesn't support transparency, so use normal generation
+        const colorOptions = {
+          dark: options.color?.dark || '#000000',
+          light: options.color?.light || '#ffffff'
+        };
+        
         qrDataUrl = await this.generateQRDataURL(data, {
           ...baseOptions,
           type: 'image/jpeg',
-          quality: options.quality
+          quality: options.quality,
+          color: colorOptions
         });
         format = OutputFormat.JPG;
       } else if (options.type === 'image/webp') {
-        qrDataUrl = await this.generateQRDataURL(data, {
-          ...baseOptions,
-          type: 'image/webp',
-          quality: options.quality
-        });
+        // WebP supports transparency
+        if (options.transparent) {
+          qrDataUrl = await this.generateTransparentQR(data, {
+            ...baseOptions,
+            type: 'image/webp',
+            quality: options.quality
+          }, options.color?.dark || '#000000');
+        } else {
+          const colorOptions = {
+            dark: options.color?.dark || '#000000',
+            light: options.color?.light || '#ffffff'
+          };
+          
+          qrDataUrl = await this.generateQRDataURL(data, {
+            ...baseOptions,
+            type: 'image/webp',
+            quality: options.quality,
+            color: colorOptions
+          });
+        }
         format = OutputFormat.WEBP;
       } else {
-        // Default to PNG
-        qrDataUrl = await this.generateQRDataURL(data, {
-          ...baseOptions,
-          type: 'image/png'
-        });
+        // Default to PNG with proper transparency support
+        if (options.transparent) {
+          qrDataUrl = await this.generateTransparentQR(data, {
+            ...baseOptions,
+            type: 'image/png'
+          }, options.color?.dark || '#000000');
+        } else {
+          const colorOptions = {
+            dark: options.color?.dark || '#000000',
+            light: options.color?.light || '#ffffff'
+          };
+          
+          qrDataUrl = await this.generateQRDataURL(data, {
+            ...baseOptions,
+            type: 'image/png',
+            color: colorOptions
+          });
+        }
         format = OutputFormat.PNG;
       }
 
@@ -220,10 +428,12 @@ export class QRGenerator {
   ): Promise<QRGenerationResponse> {
     if (options.type === 'svg') {
       // Generate colored SVG
+      const colorOptions = this.prepareColorOptions(options);
+      
       const svgOptions = {
         errorCorrectionLevel: options.errorCorrectionLevel,
         margin: options.margin,
-        color: options.color,
+        color: colorOptions,
         width: options.width
       };
 
@@ -232,11 +442,17 @@ export class QRGenerator {
         type: 'svg' as any
       });
 
-      const dataUrl = `data:image/svg+xml;base64,${Buffer.from(svgString).toString('base64')}`;
+      // Handle transparency in SVG
+      let processedSVG = svgString;
+      if (options.transparent) {
+        processedSVG = this.makeTransparentSVG(svgString);
+      }
+
+      const dataUrl = `data:image/svg+xml;base64,${Buffer.from(processedSVG).toString('base64')}`;
 
       return {
         success: true,
-        data: svgString,
+        data: processedSVG,
         dataUrl,
         filename,
         format: OutputFormat.SVG,
@@ -247,11 +463,10 @@ export class QRGenerator {
         timestamp: Date.now()
       };
     } else {
-      // Generate colored raster image using callback-based method
+      // Generate colored raster image with proper transparency
       const baseOptions = {
         errorCorrectionLevel: options.errorCorrectionLevel,
         margin: options.margin,
-        color: options.color,
         width: options.width,
         rendererOpts: options.rendererOpts
       };
@@ -261,25 +476,60 @@ export class QRGenerator {
 
       // Use the safe callback-based method
       if (options.type === 'image/jpeg') {
+        // JPEG doesn't support transparency
+        const colorOptions = {
+          dark: options.color?.dark || '#000000',
+          light: options.color?.light || '#ffffff'
+        };
+        
         qrDataUrl = await this.generateQRDataURL(data, {
           ...baseOptions,
           type: 'image/jpeg',
-          quality: options.quality
+          quality: options.quality,
+          color: colorOptions
         });
         format = OutputFormat.JPG;
       } else if (options.type === 'image/webp') {
-        qrDataUrl = await this.generateQRDataURL(data, {
-          ...baseOptions,
-          type: 'image/webp',
-          quality: options.quality
-        });
+        // WebP supports transparency
+        if (options.transparent) {
+          qrDataUrl = await this.generateTransparentQR(data, {
+            ...baseOptions,
+            type: 'image/webp',
+            quality: options.quality
+          }, options.color?.dark || '#000000');
+        } else {
+          const colorOptions = {
+            dark: options.color?.dark || '#000000',
+            light: options.color?.light || '#ffffff'
+          };
+          
+          qrDataUrl = await this.generateQRDataURL(data, {
+            ...baseOptions,
+            type: 'image/webp',
+            quality: options.quality,
+            color: colorOptions
+          });
+        }
         format = OutputFormat.WEBP;
       } else {
-        // Default to PNG
-        qrDataUrl = await this.generateQRDataURL(data, {
-          ...baseOptions,
-          type: 'image/png'
-        });
+        // Default to PNG with proper transparency support
+        if (options.transparent) {
+          qrDataUrl = await this.generateTransparentQR(data, {
+            ...baseOptions,
+            type: 'image/png'
+          }, options.color?.dark || '#000000');
+        } else {
+          const colorOptions = {
+            dark: options.color?.dark || '#000000',
+            light: options.color?.light || '#ffffff'
+          };
+          
+          qrDataUrl = await this.generateQRDataURL(data, {
+            ...baseOptions,
+            type: 'image/png',
+            color: colorOptions
+          });
+        }
         format = OutputFormat.PNG;
       }
 
@@ -306,10 +556,12 @@ export class QRGenerator {
     options: QROptions, 
     filename: string
   ): Promise<QRGenerationResponse> {
+    const colorOptions = this.prepareColorOptions(options);
+    
     const qrOptions = {
       errorCorrectionLevel: options.errorCorrectionLevel,
       margin: options.margin,
-      color: options.color,
+      color: colorOptions,
       width: options.width,
       xmlDeclaration: options.xmlDeclaration
     };
@@ -319,11 +571,17 @@ export class QRGenerator {
       type: 'svg' as any
     });
 
-    const dataUrl = `data:image/svg+xml;base64,${Buffer.from(svgString).toString('base64')}`;
+    // Handle transparency in SVG
+    let processedSVG = svgString;
+    if (options.transparent) {
+      processedSVG = this.makeTransparentSVG(svgString);
+    }
+
+    const dataUrl = `data:image/svg+xml;base64,${Buffer.from(processedSVG).toString('base64')}`;
 
     return {
       success: true,
-      data: svgString,
+      data: processedSVG,
       dataUrl,
       filename: filename.replace(/\.(png|jpg|jpeg|webp)$/i, '.svg'),
       format: OutputFormat.SVG,
@@ -347,10 +605,12 @@ export class QRGenerator {
     
     if (options.type === 'svg') {
       // Generate high quality SVG
+      const colorOptions = this.prepareColorOptions(options);
+      
       const svgOptions = {
         errorCorrectionLevel: ErrorCorrectionLevel.HIGH,
         margin: Math.max(options.margin, 4),
-        color: options.color,
+        color: colorOptions,
         width: highQualityWidth
       };
 
@@ -359,11 +619,17 @@ export class QRGenerator {
         type: 'svg' as any
       });
 
-      const dataUrl = `data:image/svg+xml;base64,${Buffer.from(svgString).toString('base64')}`;
+      // Handle transparency in SVG
+      let processedSVG = svgString;
+      if (options.transparent) {
+        processedSVG = this.makeTransparentSVG(svgString);
+      }
+
+      const dataUrl = `data:image/svg+xml;base64,${Buffer.from(processedSVG).toString('base64')}`;
 
       return {
         success: true,
-        data: svgString,
+        data: processedSVG,
         dataUrl,
         filename,
         format: OutputFormat.SVG,
@@ -374,11 +640,10 @@ export class QRGenerator {
         timestamp: Date.now()
       };
     } else {
-      // Generate high quality raster image using callback-based method
+      // Generate high quality raster image with proper transparency
       const baseOptions = {
         errorCorrectionLevel: ErrorCorrectionLevel.HIGH,
         margin: Math.max(options.margin, 4),
-        color: options.color,
         width: highQualityWidth,
         rendererOpts: {
           crisp: true,
@@ -391,25 +656,60 @@ export class QRGenerator {
 
       // Use the safe callback-based method
       if (options.type === 'image/jpeg') {
+        // JPEG doesn't support transparency
+        const colorOptions = {
+          dark: options.color?.dark || '#000000',
+          light: options.color?.light || '#ffffff'
+        };
+        
         qrDataUrl = await this.generateQRDataURL(data, {
           ...baseOptions,
           type: 'image/jpeg',
-          quality: Math.max(options.quality, 0.95)
+          quality: Math.max(options.quality, 0.95),
+          color: colorOptions
         });
         format = OutputFormat.JPG;
       } else if (options.type === 'image/webp') {
-        qrDataUrl = await this.generateQRDataURL(data, {
-          ...baseOptions,
-          type: 'image/webp',
-          quality: Math.max(options.quality, 0.95)
-        });
+        // WebP supports transparency
+        if (options.transparent) {
+          qrDataUrl = await this.generateTransparentQR(data, {
+            ...baseOptions,
+            type: 'image/webp',
+            quality: Math.max(options.quality, 0.95)
+          }, options.color?.dark || '#000000');
+        } else {
+          const colorOptions = {
+            dark: options.color?.dark || '#000000',
+            light: options.color?.light || '#ffffff'
+          };
+          
+          qrDataUrl = await this.generateQRDataURL(data, {
+            ...baseOptions,
+            type: 'image/webp',
+            quality: Math.max(options.quality, 0.95),
+            color: colorOptions
+          });
+        }
         format = OutputFormat.WEBP;
       } else {
-        // Default to PNG
-        qrDataUrl = await this.generateQRDataURL(data, {
-          ...baseOptions,
-          type: 'image/png'
-        });
+        // Default to PNG with proper transparency support
+        if (options.transparent) {
+          qrDataUrl = await this.generateTransparentQR(data, {
+            ...baseOptions,
+            type: 'image/png'
+          }, options.color?.dark || '#000000');
+        } else {
+          const colorOptions = {
+            dark: options.color?.dark || '#000000',
+            light: options.color?.light || '#ffffff'
+          };
+          
+          qrDataUrl = await this.generateQRDataURL(data, {
+            ...baseOptions,
+            type: 'image/png',
+            color: colorOptions
+          });
+        }
         format = OutputFormat.PNG;
       }
 
@@ -426,6 +726,33 @@ export class QRGenerator {
         timestamp: Date.now()
       };
     }
+  }
+
+  /**
+   * Make SVG transparent by removing or modifying background elements
+   */
+  private makeTransparentSVG(svgString: string): string {
+    // Remove any fill attributes that represent background
+    let transparentSVG = svgString;
+    
+    // Remove background rectangle if present
+    transparentSVG = transparentSVG.replace(/<rect[^>]*fill="white"[^>]*>/gi, '');
+    transparentSVG = transparentSVG.replace(/<rect[^>]*fill="#ffffff"[^>]*>/gi, '');
+    transparentSVG = transparentSVG.replace(/<rect[^>]*fill="#fff"[^>]*>/gi, '');
+    transparentSVG = transparentSVG.replace(/<rect[^>]*fill="rgb\(255,\s*255,\s*255\)"[^>]*>/gi, '');
+    
+    // Replace background color references
+    transparentSVG = transparentSVG.replace(/fill="white"/gi, 'fill="none"');
+    transparentSVG = transparentSVG.replace(/fill="#ffffff"/gi, 'fill="none"');
+    transparentSVG = transparentSVG.replace(/fill="#fff"/gi, 'fill="none"');
+    transparentSVG = transparentSVG.replace(/fill="rgb\(255,\s*255,\s*255\)"/gi, 'fill="none"');
+    
+    // Remove any explicit background paths/rects
+    transparentSVG = transparentSVG.replace(/<path[^>]*fill="white"[^>]*\/>/gi, '');
+    transparentSVG = transparentSVG.replace(/<path[^>]*fill="#ffffff"[^>]*\/>/gi, '');
+    transparentSVG = transparentSVG.replace(/<path[^>]*fill="#fff"[^>]*\/>/gi, '');
+    
+    return transparentSVG;
   }
 
   /**
@@ -500,11 +827,6 @@ export class QRGenerator {
         ...userOptions.color
       }
     };
-
-    // Handle transparency
-    if (merged.transparent && merged.color) {
-      merged.color.light = 'transparent';
-    }
 
     return merged;
   }

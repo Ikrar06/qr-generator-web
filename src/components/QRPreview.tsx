@@ -85,9 +85,13 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
 
   // Get preview background style
   const getPreviewBackgroundStyle = () => {
+    if (!isTransparent) {
+      return { backgroundColor: '#f9fafb' };
+    }
+
     switch (previewBackground) {
       case 'transparent':
-        return {};
+        return { backgroundColor: 'transparent' };
       case 'white':
         return { backgroundColor: '#ffffff' };
       case 'black':
@@ -128,19 +132,31 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
           <span>QR Code Preview</span>
           <div className="flex items-center gap-1">
             {/* Background selector for transparent QR codes */}
-            {isTransparent && qrData && !loading && (
+            {isTransparent && qrData && !loading && !error && (
               <div className="flex items-center gap-1 mr-3">
                 <Button
-                  variant={previewBackground === 'checkered' ? 'primary' : 'secondary'}
+                  variant={previewBackground === 'checkered' ? 'primary' : 'ghost'}
                   size="sm"
                   onClick={() => setPreviewBackground('checkered')}
                   className="px-2"
                   title="Checkered background"
                 >
-                  <div className="w-4 h-4 border border-gray-400 rounded-sm bg-checkered"></div>
+                  <div 
+                    className="w-4 h-4 border border-gray-400 rounded-sm"
+                    style={{
+                      backgroundImage: `
+                        linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                        linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                        linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)
+                      `,
+                      backgroundSize: '4px 4px',
+                      backgroundPosition: '0 0, 0 2px, 2px -2px, -2px 0px'
+                    }}
+                  />
                 </Button>
                 <Button
-                  variant={previewBackground === 'white' ? 'primary' : 'secondary'}
+                  variant={previewBackground === 'white' ? 'primary' : 'ghost'}
                   size="sm"
                   onClick={() => setPreviewBackground('white')}
                   className="px-2"
@@ -149,7 +165,7 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
                   <div className="w-4 h-4 bg-white border border-gray-400 rounded-sm"></div>
                 </Button>
                 <Button
-                  variant={previewBackground === 'black' ? 'primary' : 'secondary'}
+                  variant={previewBackground === 'black' ? 'primary' : 'ghost'}
                   size="sm"
                   onClick={() => setPreviewBackground('black')}
                   className="px-2"
@@ -160,10 +176,10 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
               </div>
             )}
             
-            {allowZoom && qrData && !loading && (
+            {allowZoom && qrData && !loading && !error && (
               <>
                 <Button
-                  variant="secondary"
+                  variant="ghost"
                   size="sm"
                   onClick={zoomOut}
                   disabled={zoom <= 0.25}
@@ -178,7 +194,7 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
                   {Math.round(zoom * 100)}%
                 </span>
                 <Button
-                  variant="secondary"
+                  variant="ghost"
                   size="sm"
                   onClick={zoomIn}
                   disabled={zoom >= 4}
@@ -190,7 +206,7 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
                   </svg>
                 </Button>
                 <Button
-                  variant="secondary"
+                  variant="ghost"
                   size="sm"
                   onClick={resetZoom}
                   disabled={zoom === 1}
@@ -224,7 +240,7 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
           {/* QR Code Display Area */}
           <div 
             className="flex items-center justify-center p-8 border-2 border-dashed border-gray-200 rounded-lg min-h-[300px]"
-            style={isTransparent && qrData ? getPreviewBackgroundStyle() : { backgroundColor: '#f9fafb' }}
+            style={getPreviewBackgroundStyle()}
           >
             {loading ? (
               <div className="text-center">
@@ -264,7 +280,7 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
                         onLoad={handleImageLoad}
                         className={cn(
                           "max-w-full max-h-full rounded",
-                          isTransparent ? "" : "border border-gray-300"
+                          !isTransparent && "border border-gray-300"
                         )}
                         style={{
                           // Maintain aspect ratio and prevent stretching
@@ -424,7 +440,6 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {Object.entries(formatMetadata(qrData.metadata)).map(([key, value]) => (
                           <div key={key} className="flex justify-between items-center">
-                            <span className="text-xs text-gray-600">{key}:</span>
                             <span className="text-xs font-mono text-gray-900">{value}</span>
                           </div>
                         ))}
@@ -498,18 +513,6 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
           )}
         </div>
       </CardContent>
-
-      <style jsx>{`
-        .bg-checkered {
-          background-image: 
-            linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
-            linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
-            linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
-            linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
-          background-size: 8px 8px;
-          background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
-        }
-      `}</style>
     </Card>
   );
 };

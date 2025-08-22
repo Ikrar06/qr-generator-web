@@ -486,42 +486,44 @@ export default function HomePage() {
                   </CardContent>
                 </Card>
 
-                {/* Color Customization - FIXED VERSION */}
+                {/* Color Customization - Always show for all modes that support colors */}
                 {(qrForm.formData.mode === QRMode.COLORED || 
-                  qrForm.formData.mode === QRMode.HIGH_QUALITY) && (
+                  qrForm.formData.mode === QRMode.HIGH_QUALITY ||
+                  qrForm.formData.mode === QRMode.SVG ||
+                  qrForm.formData.mode === QRMode.BASIC) && ( // Added BASIC mode
                   <Card>
                     <CardHeader>
                       <CardTitle>Step 3: Customize Colors</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <ColorPicker
-                      foregroundColor={qrForm.formData.options?.color?.dark || '#000000'}
-                      backgroundColor={qrForm.formData.options?.color?.light || '#ffffff'}
-                      isTransparent={qrForm.formData.options?.transparent || false}
-                      onForegroundChange={(color) => {
-                        qrForm.updateColor('dark', color);
-                        analytics.trackInteraction('color_changed', {
-                          colorType: 'foreground',
-                          color
-                        });
-                      }}
-                      onBackgroundChange={(color) => {
-                        qrForm.updateColor('light', color);
-                        analytics.trackInteraction('color_changed', {
-                          colorType: 'background',
-                          color
-                        });
-                      }}
-                      onTransparencyChange={(isTransparent) => {
-                        // Gunakan function dari hook useQRForm
-                        qrForm.updateTransparency(isTransparent);
-                        analytics.trackInteraction('transparency_changed', {
-                          isTransparent
-                        });
-                      }}
-                      disabled={qrGenerator.isGenerating}
-                      showTransparencyOption={true}
-                    />
+                        foregroundColor={qrForm.formData.options?.color?.dark || '#000000'}
+                        backgroundColor={qrForm.formData.options?.color?.light || '#ffffff'}
+                        isTransparent={qrForm.formData.options?.transparent || false} 
+                        onForegroundChange={(color) => {
+                          qrForm.updateColor('dark', color);
+                          analytics.trackInteraction('color_changed', {
+                            colorType: 'foreground',
+                            color
+                          });
+                        }}
+                        onBackgroundChange={(color) => {
+                          qrForm.updateColor('light', color);
+                          analytics.trackInteraction('color_changed', {
+                            colorType: 'background',
+                            color
+                          });
+                        }}
+                        onTransparencyChange={(isTransparent) => { 
+                          console.log('Transparency change called with:', isTransparent);
+                          qrForm.updateTransparency(isTransparent);
+                          analytics.trackInteraction('transparency_changed', {
+                            isTransparent
+                          });
+                        }}
+                        disabled={qrGenerator.isGenerating}
+                        showTransparencyOption={true} 
+                      />
                     </CardContent>
                   </Card>
                 )}
