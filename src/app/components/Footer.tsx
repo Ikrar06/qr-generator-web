@@ -1,6 +1,8 @@
 // src/app/components/Footer.tsx
 'use client';
 
+import Image from "next/image";
+
 const socialLinks = [
   {
     name: 'GitHub',
@@ -32,20 +34,14 @@ export default function Footer({ className = '' }: FooterProps) {
           {/* Brand Section */}
           <div>
             <div className="flex items-center space-x-2 mb-4">
-              <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
-                <svg
-                  className="w-5 h-5 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a1.5 1.5 0 01-3 0V5.697a.75.75 0 00-1.5 0V14.5a1.5 1.5 0 01-3 0V5.697a.75.75 0 00-1.5 0V14.5"
-                  />
-                </svg>
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg overflow-hidden">
+                <Image
+                  src="/icon.png" 
+                  alt="QR Generator Icon"
+                  width={32}
+                  height={32}
+                  className="object-contain"
+                />
               </div>
               <span className="text-xl font-bold">QR Generator</span>
             </div>

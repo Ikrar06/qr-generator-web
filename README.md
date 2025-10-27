@@ -397,28 +397,6 @@ We love hearing about new feature ideas! Please check existing issues first and 
 - Integration APIs
 - Enhanced accessibility features
 
-## 🔮 Roadmap
-
-### Short Term (Next 3 months)
-- [ ] QR code templates library
-- [ ] Improved mobile experience
-- [ ] Additional export formats
-- [ ] Performance optimizations
-- [ ] Enhanced error messages
-
-### Medium Term (3-6 months)
-- [ ] QR code analytics dashboard
-- [ ] Advanced customization options
-- [ ] API for developers
-- [ ] Plugin system
-- [ ] Collaboration features
-
-### Long Term (6+ months)
-- [ ] Enterprise features
-- [ ] White-label solutions
-- [ ] Advanced integrations
-- [ ] AI-powered suggestions
-- [ ] Multi-language support
 
 ## 📈 Performance
 
@@ -653,19 +631,6 @@ jobs:
 - GDPR compliant
 - Local data processing
 
-## 🎓 Educational Resources
-
-### Tutorials
-- [Getting Started Guide](docs/getting-started.md)
-- [Advanced Features](docs/advanced-features.md)
-- [Integration Guide](docs/integration.md)
-- [Customization Tutorial](docs/customization.md)
-
-### Best Practices
-- [QR Code Design Guidelines](docs/design-guidelines.md)
-- [Accessibility Best Practices](docs/accessibility.md)
-- [Performance Optimization](docs/performance.md)
-- [Security Considerations](docs/security.md)
 
 ## 🤖 Automation
 
@@ -688,43 +653,7 @@ jobs:
 }
 ```
 
-## 🎯 Performance Metrics
 
-### Core Web Vitals
-- **LCP (Largest Contentful Paint)**: < 2.5s
-- **FID (First Input Delay)**: < 100ms
-- **CLS (Cumulative Layout Shift)**: < 0.1
-- **FCP (First Contentful Paint)**: < 1.8s
-
-### Lighthouse Scores
-- Performance: 95+
-- Accessibility: 100
-- Best Practices: 100
-- SEO: 100
-- PWA: 100
-
----
-
-## 📋 Quick Reference
-
-### Keyboard Shortcuts
-- `Ctrl/Cmd + Enter`: Generate QR code
-- `Ctrl/Cmd + S`: Download QR code
-- `Esc`: Clear form
-- `F1`: Open user guide
-- `Ctrl/Cmd + /`: Show keyboard shortcuts
-
-### URL Parameters
-- `?data=`: Pre-fill data field
-- `?type=`: Set data type
-- `?mode=`: Set generation mode
-- `?color=`: Set foreground color
-
-### Example URLs
-```
-https://yourapp.com?data=https://example.com&type=url&mode=colored
-https://yourapp.com?data=Hello%20World&type=text&mode=basic
-```
 
 ---
 

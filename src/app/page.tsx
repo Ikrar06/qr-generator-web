@@ -330,7 +330,7 @@ export default function HomePage() {
           <div className="container-tight">
             <div className="text-center mb-12">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-                Create Professional
+                Create
                 <span className="text-gradient block">QR Codes</span>
                 in Seconds
               </h1>
