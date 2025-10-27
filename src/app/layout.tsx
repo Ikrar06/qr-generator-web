@@ -20,7 +20,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'QR Generator - Create Professional QR Codes Online',
+    default: 'QR Generator',
     template: '%s | QR Generator'
   },
   description: 'Generate high-quality QR codes instantly. Support for URLs, text, emails, and more with custom colors and multiple export formats. Fast, reliable, and free QR code generator.',
@@ -44,6 +44,17 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.png', type: 'image/png', sizes: '32x32' },
+      { url: '/icon.png', type: 'image/png', sizes: '16x16' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180' },
+    ],
+    shortcut: '/favicon.ico',
+  },
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'),
   alternates: {
     canonical: '/',
@@ -52,7 +63,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: '/',
-    title: 'QR Generator - Create Professional QR Codes Online',
+    title: 'QR Generator',
     description: 'Generate high-quality QR codes instantly. Support for URLs, text, emails, and more with custom colors and multiple export formats.',
     siteName: 'QR Generator',
     // Remove problematic image reference
@@ -67,7 +78,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'QR Generator - Create Professional QR Codes Online',
+    title: 'QR Generator',
     description: 'Generate high-quality QR codes instantly. Support for URLs, text, emails, and more with custom colors and multiple export formats.',
     // Remove problematic image reference
     // images: ['/images/twitter-image.png'],
@@ -128,9 +139,12 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <link rel="dns-prefetch" href="//fonts.googleapis.com" />
         
         {/* Favicon and app icons matching your manifest */}
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/icon.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/icon.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <link rel="manifest" href="/site.webmanifest" />
+
         
         {/* Performance optimizations */}
         <meta httpEquiv="x-dns-prefetch-control" content="on" />
