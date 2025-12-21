@@ -2,8 +2,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { Button } from './ui/Button';
+import { Card, CardHeader, CardTitle, CardContent } from './ui/Card';
 import { QRDataType, QRMode, OutputFormat, ErrorCorrectionLevel } from '@/types/qr-types';
 
 interface UserGuideProps {

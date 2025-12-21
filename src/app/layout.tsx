@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
-import { ErrorBoundary } from './components/ErrorBoundary';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({

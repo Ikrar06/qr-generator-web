@@ -1,4 +1,4 @@
-// src/app/components/QRPreview.tsx
+// src/components/QRPreview.tsx
 'use client';
 
 import React, { useState, useRef, useCallback } from 'react';

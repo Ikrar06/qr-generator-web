@@ -1,4 +1,4 @@
-// src/app/components/ModeSelector.tsx
+// src/components/ModeSelector.tsx
 'use client';
 
 import React from 'react';

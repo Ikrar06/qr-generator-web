@@ -1,4 +1,4 @@
-// src/app/components/ColorPicker.tsx
+// src/components/ColorPicker.tsx
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';

@@ -1,4 +1,4 @@
-// src/app/components/Header.tsx
+// src/components/Header.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -97,7 +97,7 @@ export default function Header({ className = '' }: HeaderProps) {
           >
             <div className="flex items-center justify-center w-8 h-8 rounded-lg overflow-hidden">
               <Image
-                src="/icon.png" // otomatis ambil dari public/icon.png
+                src="/icon.png" 
                 alt="App Icon"
                 width={32}
                 height={32}

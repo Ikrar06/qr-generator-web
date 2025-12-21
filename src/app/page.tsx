@@ -2,11 +2,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import UserGuide from '../components/UserGuide';
-import { LoadingSpinner, LoadingStates } from './components/LoadingSpinner';
-import { useErrorBoundary } from './components/ErrorBoundary';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import UserGuide from '@/components/UserGuide';
+import { LoadingSpinner, LoadingStates } from '@/components/LoadingSpinner';
+import { useErrorBoundary } from '@/components/ErrorBoundary';
 import {
   QRDataInput,
   ModeSelector,

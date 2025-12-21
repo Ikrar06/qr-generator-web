@@ -1,4 +1,4 @@
-// src/app/components/index.ts
+// src/components/index.ts
 // Batch 5 - Main QR Components Export File
 
 export { QRDataInput } from './QRDataInput';
