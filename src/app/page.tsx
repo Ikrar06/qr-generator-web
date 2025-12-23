@@ -17,7 +17,11 @@ import {
   CardHeader,
   CardTitle,
   CardContent,
-  Button
+  Button,
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent
 } from '@/components';
 import { useQRGenerator, useQRForm } from '@/hooks/useQRGenerator';
 import { QRMode, OutputFormat, ErrorCorrectionLevel, QRDataType } from '@/types/qr-types';
@@ -443,144 +447,172 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Left Column - Input and Options */}
-              <div className="space-y-6">
-                {/* Data Input */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Step 1: Enter Your Data</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <QRDataInput
-                      value={qrForm.formData.data}
-                      onChange={(value) => qrForm.updateField('data', value)}
-                      dataType={currentDataType}
-                      onDataTypeChange={handleDataTypeChange}
-                      onValidationChange={(result) => {
-                        // Handle validation result
-                        console.log('Validation result:', result);
-                      }}
-                      disabled={qrGenerator.isGenerating}
-                      loading={qrGenerator.isGenerating}
-                    />
-                  </CardContent>
-                </Card>
-
-                {/* Mode Selection */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Step 2: Choose Generation Mode</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ModeSelector
-                      selectedMode={qrForm.formData.mode}
-                      onModeChange={(mode) => {
-                        qrForm.updateField('mode', mode);
-                        analytics.trackInteraction('mode_changed', {
-                          previousMode: qrForm.formData.mode,
-                          newMode: mode
-                        });
-                      }}
-                      disabled={qrGenerator.isGenerating}
-                    />
-                  </CardContent>
-                </Card>
-
-                {/* Color Customization - Always show for all modes that support colors */}
-                {(qrForm.formData.mode === QRMode.COLORED || 
-                  qrForm.formData.mode === QRMode.HIGH_QUALITY ||
-                  qrForm.formData.mode === QRMode.SVG ||
-                  qrForm.formData.mode === QRMode.BASIC) && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Step 3: Customize Colors</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ColorPicker
-                        foregroundColor={qrForm.formData.options?.color?.dark || '#000000'}
-                        backgroundColor={qrForm.formData.options?.color?.light || '#ffffff'}
-                        isTransparent={qrForm.formData.options?.transparent || false} 
-                        qrMode={qrForm.formData.mode} // ADD THIS LINE - Pass the current QR mode
-                        onForegroundChange={(color) => {
-                          qrForm.updateColor('dark', color);
-                          analytics.trackInteraction('color_changed', {
-                            colorType: 'foreground',
-                            color
-                          });
-                        }}
-                        onBackgroundChange={(color) => {
-                          qrForm.updateColor('light', color);
-                          analytics.trackInteraction('color_changed', {
-                            colorType: 'background',
-                            color
-                          });
-                        }}
-                        onTransparencyChange={(isTransparent) => { 
-                          console.log('Transparency change called with:', isTransparent);
-                          qrForm.updateTransparency(isTransparent);
-                          analytics.trackInteraction('transparency_changed', {
-                            isTransparent
-                          });
+              {/* Left Column - Input and Options with Accordion */}
+              <div className="space-y-4">
+                <Accordion defaultValue="step1" allowMultiple={false}>
+                  {/* Step 1: Data Input */}
+                  <AccordionItem value="step1">
+                    <AccordionTrigger
+                      icon={
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      }
+                    >
+                      Step 1: Enter Your Data
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <QRDataInput
+                        value={qrForm.formData.data}
+                        onChange={(value) => qrForm.updateField('data', value)}
+                        dataType={currentDataType}
+                        onDataTypeChange={handleDataTypeChange}
+                        onValidationChange={(result) => {
+                          console.log('Validation result:', result);
                         }}
                         disabled={qrGenerator.isGenerating}
-                        showTransparencyOption={true} 
+                        loading={qrGenerator.isGenerating}
                       />
-                    </CardContent>
-                  </Card>
-                )}
+                    </AccordionContent>
+                  </AccordionItem>
 
-                {/* Advanced Options */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Advanced Options</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {/* Size Control */}
-                    <div>
-                      <label className="form-label">
-                        Size: {qrForm.formData.options?.width || 256}px
-                      </label>
-                      <input
-                        type="range"
-                        min="128"
-                        max="1024"
-                        step="32"
-                        value={qrForm.formData.options?.width || 256}
-                        onChange={(e) => {
-                          const size = parseInt(e.target.value);
-                          qrForm.updateOption('width', size);
-                          qrForm.updateOption('height', size);
-                          analytics.trackInteraction('size_changed', { size });
+                  {/* Step 2: Mode Selection */}
+                  <AccordionItem value="step2">
+                    <AccordionTrigger
+                      icon={
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                        </svg>
+                      }
+                    >
+                      Step 2: Choose Generation Mode
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <ModeSelector
+                        selectedMode={qrForm.formData.mode}
+                        onModeChange={(mode) => {
+                          qrForm.updateField('mode', mode);
+                          analytics.trackInteraction('mode_changed', {
+                            previousMode: qrForm.formData.mode,
+                            newMode: mode
+                          });
                         }}
-                        className="w-full mt-2"
                         disabled={qrGenerator.isGenerating}
                       />
-                    </div>
+                    </AccordionContent>
+                  </AccordionItem>
 
-                    {/* Error Correction Level */}
-                    <div>
-                      <label className="form-label">Error Correction</label>
-                      <select
-                        value={qrForm.formData.options?.errorCorrectionLevel || ErrorCorrectionLevel.MEDIUM}
-                        onChange={(e) => {
-                          const level = e.target.value as ErrorCorrectionLevel;
-                          qrForm.updateOption('errorCorrectionLevel', level);
-                          analytics.trackInteraction('error_correction_changed', { level });
-                        }}
-                        className="input-primary mt-2"
-                        disabled={qrGenerator.isGenerating}
+                  {/* Step 3: Color Customization */}
+                  {(qrForm.formData.mode === QRMode.COLORED ||
+                    qrForm.formData.mode === QRMode.HIGH_QUALITY ||
+                    qrForm.formData.mode === QRMode.SVG ||
+                    qrForm.formData.mode === QRMode.BASIC) && (
+                    <AccordionItem value="step3">
+                      <AccordionTrigger
+                        icon={
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                          </svg>
+                        }
                       >
-                        <option value={ErrorCorrectionLevel.LOW}>Low (~7%) - More data capacity</option>
-                        <option value={ErrorCorrectionLevel.MEDIUM}>Medium (~15%) - Balanced</option>
-                        <option value={ErrorCorrectionLevel.QUARTILE}>Quartile (~25%) - Good for print</option>
-                        <option value={ErrorCorrectionLevel.HIGH}>High (~30%) - Maximum durability</option>
-                      </select>
-                    </div>
-                  </CardContent>
-                </Card>
+                        Step 3: Customize Colors
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <ColorPicker
+                          foregroundColor={qrForm.formData.options?.color?.dark || '#000000'}
+                          backgroundColor={qrForm.formData.options?.color?.light || '#ffffff'}
+                          isTransparent={qrForm.formData.options?.transparent || false}
+                          qrMode={qrForm.formData.mode}
+                          onForegroundChange={(color) => {
+                            qrForm.updateColor('dark', color);
+                            analytics.trackInteraction('color_changed', {
+                              colorType: 'foreground',
+                              color
+                            });
+                          }}
+                          onBackgroundChange={(color) => {
+                            qrForm.updateColor('light', color);
+                            analytics.trackInteraction('color_changed', {
+                              colorType: 'background',
+                              color
+                            });
+                          }}
+                          onTransparencyChange={(isTransparent) => {
+                            console.log('Transparency change called with:', isTransparent);
+                            qrForm.updateTransparency(isTransparent);
+                            analytics.trackInteraction('transparency_changed', {
+                              isTransparent
+                            });
+                          }}
+                          disabled={qrGenerator.isGenerating}
+                          showTransparencyOption={true}
+                        />
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
 
-                {/* Action Buttons */}
-                <div className="flex gap-4">
+                  {/* Step 4: Advanced Options */}
+                  <AccordionItem value="step4">
+                    <AccordionTrigger
+                      icon={
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      }
+                    >
+                      Advanced Options
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-4">
+                        {/* Size Control */}
+                        <div>
+                          <label className="form-label">
+                            Size: {qrForm.formData.options?.width || 256}px
+                          </label>
+                          <input
+                            type="range"
+                            min="128"
+                            max="1024"
+                            step="32"
+                            value={qrForm.formData.options?.width || 256}
+                            onChange={(e) => {
+                              const size = parseInt(e.target.value);
+                              qrForm.updateOption('width', size);
+                              qrForm.updateOption('height', size);
+                              analytics.trackInteraction('size_changed', { size });
+                            }}
+                            className="w-full mt-2"
+                            disabled={qrGenerator.isGenerating}
+                          />
+                        </div>
+
+                        {/* Error Correction Level */}
+                        <div>
+                          <label className="form-label">Error Correction</label>
+                          <select
+                            value={qrForm.formData.options?.errorCorrectionLevel || ErrorCorrectionLevel.MEDIUM}
+                            onChange={(e) => {
+                              const level = e.target.value as ErrorCorrectionLevel;
+                              qrForm.updateOption('errorCorrectionLevel', level);
+                              analytics.trackInteraction('error_correction_changed', { level });
+                            }}
+                            className="input-primary mt-2"
+                            disabled={qrGenerator.isGenerating}
+                          >
+                            <option value={ErrorCorrectionLevel.LOW}>Low (~7%) - More data capacity</option>
+                            <option value={ErrorCorrectionLevel.MEDIUM}>Medium (~15%) - Balanced</option>
+                            <option value={ErrorCorrectionLevel.QUARTILE}>Quartile (~25%) - Good for print</option>
+                            <option value={ErrorCorrectionLevel.HIGH}>High (~30%) - Maximum durability</option>
+                          </select>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+
+                {/* Action Buttons - Outside accordion, always visible */}
+                <div className="flex gap-4 mt-6">
                   <Button
                     variant="primary"
                     size="lg"

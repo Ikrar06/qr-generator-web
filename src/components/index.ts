@@ -20,3 +20,9 @@ export {
 } from '@/components/ui/Card';
 export { Modal } from '@/components/ui/Modal';
 export { Toast } from '@/components/ui/Toast';
+export {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent
+} from '@/components/ui/Accordion';

@@ -303,8 +303,13 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
               </div>
             ) : (
               <div className="text-center">
-                <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 48 48">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4a2 2 0 012-2h8a2 2 0 012 2v2m-6 12v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-8a2 2 0 012-2h2m8 0h2a2 2 0 012 2v8a2 2 0 01-2 2h-8a2 2 0 01-2-2v-2" />
+                <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="currentColor" viewBox="0 0 24 24">
+                  {/* QR Code Icon */}
+                  <path d="M3 11h8V3H3v8zm2-6h4v4H5V5zm-2 8h8v8H3v-8zm2 6h4v-4H5v4zm8-14v8h8V3h-8zm6 6h-4V5h4v4zm-6 4h2v2h-2v-2zm2 2h2v2h-2v-2zm-2 2h2v2h-2v-2zm4-4h2v2h-2v-2zm0 4h2v4h-2v-4zm2-2h2v2h-2v-2z"/>
+                  {/* Corner markers */}
+                  <rect x="6" y="6" width="2" height="2" fill="currentColor"/>
+                  <rect x="6" y="16" width="2" height="2" fill="currentColor"/>
+                  <rect x="16" y="6" width="2" height="2" fill="currentColor"/>
                 </svg>
                 <p className="text-sm text-gray-500">Enter data and click generate to create your QR code</p>
               </div>
